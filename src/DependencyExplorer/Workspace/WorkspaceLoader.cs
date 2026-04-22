@@ -2,6 +2,7 @@ using DependencyExplorer.Models;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using System.Xml.Linq;
 
 namespace DependencyExplorer.Workspace;
 
@@ -15,7 +16,16 @@ internal sealed class WorkspaceLoader
         EnsureMsBuildRegistered();
 
         using var workspace = MSBuildWorkspace.Create();
-        var openedSolution = await workspace.OpenSolutionAsync(solutionPath, cancellationToken: cancellationToken);
+        Solution openedSolution;
+        var extension = Path.GetExtension(solutionPath);
+        if (string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase))
+        {
+            openedSolution = await OpenSlnxAsync(workspace, solutionPath, cancellationToken);
+        }
+        else
+        {
+            openedSolution = await workspace.OpenSolutionAsync(solutionPath, cancellationToken: cancellationToken);
+        }
 
         var diagnostics = workspace.Diagnostics
             .Select(diagnostic => new WorkspaceDiagnosticInfo
@@ -26,6 +36,44 @@ internal sealed class WorkspaceLoader
             .ToArray();
 
         return new WorkspaceLoadResult(openedSolution, diagnostics);
+    }
+
+    private static async Task<Solution> OpenSlnxAsync(
+        MSBuildWorkspace workspace,
+        string solutionPath,
+        CancellationToken cancellationToken)
+    {
+        var projectPaths = await ReadProjectPathsFromSlnxAsync(solutionPath, cancellationToken);
+        if (projectPaths.Count == 0)
+        {
+            throw new InvalidOperationException($"No projects were found in the .slnx file: {solutionPath}");
+        }
+
+        foreach (var projectPath in projectPaths)
+        {
+            await workspace.OpenProjectAsync(projectPath, cancellationToken: cancellationToken);
+        }
+
+        return workspace.CurrentSolution;
+    }
+
+    private static async Task<IReadOnlyList<string>> ReadProjectPathsFromSlnxAsync(
+        string solutionPath,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = File.OpenRead(solutionPath);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+        var baseDirectory = Path.GetDirectoryName(solutionPath) ?? Environment.CurrentDirectory;
+
+        return document
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Project")
+            .Select(element => element.Attribute("Path")?.Value)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => Path.GetFullPath(Path.Combine(baseDirectory, path!)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static void EnsureMsBuildRegistered()
