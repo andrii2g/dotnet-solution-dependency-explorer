@@ -88,7 +88,7 @@ internal sealed class SolutionDiscoveryService
             Metadata = new AnalysisMetadata
             {
                 ToolVersion = ToolVersion.Value,
-                InputPath = options.SolutionPath,
+                InputPath = MakeRelativePath(analysisRoot, options.SolutionPath),
                 InputKind = "solution",
                 GeneratedAtUtc = DateTimeOffset.UtcNow,
             },
