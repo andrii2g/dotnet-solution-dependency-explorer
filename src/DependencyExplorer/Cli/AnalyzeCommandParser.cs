@@ -19,7 +19,7 @@ internal static class AnalyzeCommandParser
             {
                 case "--help":
                 case "-h":
-                    return AnalyzeParseResult.HelpRequested();
+                    return AnalyzeParseResult.ForHelpRequest();
 
                 case "--solution":
                     solutionPath = ReadRequiredValue(args, ref index, "--solution", errors);
@@ -155,7 +155,7 @@ internal sealed class AnalyzeParseResult
 
     public bool IsSuccess { get; }
 
-    public bool HelpRequested { get; }
+    public bool IsHelpRequested { get; }
 
     public AnalyzeCommandOptions? Options { get; }
 
@@ -171,7 +171,7 @@ internal sealed class AnalyzeParseResult
         return new AnalyzeParseResult(false, false, null, errors);
     }
 
-    public static AnalyzeParseResult HelpRequested()
+    public static AnalyzeParseResult ForHelpRequest()
     {
         return new AnalyzeParseResult(false, true, null, Array.Empty<string>());
     }

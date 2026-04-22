@@ -22,6 +22,12 @@ internal static class CommandLineApplication
         }
 
         var parseResult = AnalyzeCommandParser.Parse(args[1..]);
+        if (parseResult.IsHelpRequested)
+        {
+            CommandLineHelp.WriteAnalyzeHelp(Console.Out);
+            return ExitCodes.Success;
+        }
+
         if (!parseResult.IsSuccess)
         {
             foreach (var error in parseResult.Errors)
