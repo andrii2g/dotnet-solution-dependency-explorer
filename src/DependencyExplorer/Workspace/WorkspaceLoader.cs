@@ -1,5 +1,6 @@
 using DependencyExplorer.Models;
 using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DependencyExplorer.Workspace;

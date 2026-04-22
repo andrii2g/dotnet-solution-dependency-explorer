@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 using DependencyExplorer.Models;
+using DependencyExplorer.Utils;
+using DependencyExplorer.Workspace;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
