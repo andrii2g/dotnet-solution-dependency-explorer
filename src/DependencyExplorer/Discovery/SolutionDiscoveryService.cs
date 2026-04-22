@@ -19,8 +19,10 @@ internal sealed class SolutionDiscoveryService
         Cli.AnalyzeCommandOptions options,
         CancellationToken cancellationToken)
     {
+        var analysisRoot = Path.GetDirectoryName(options.SolutionPath) ?? Environment.CurrentDirectory;
         var projects = new List<ProjectInfoModel>();
         var types = new List<TypeInfoModel>();
+        var discoveredTypeKeys = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var project in workspaceLoadResult.Projects.OrderBy(p => p.Name, StringComparer.Ordinal))
         {
@@ -37,7 +39,7 @@ internal sealed class SolutionDiscoveryService
             {
                 Id = projectId,
                 Name = project.Name,
-                FilePath = project.FilePath ?? string.Empty,
+                FilePath = MakeRelativePath(analysisRoot, project.FilePath),
                 Language = project.Language,
                 TargetFrameworks = targetFrameworks,
                 ProjectReferences = project.ProjectReferences
@@ -72,17 +74,11 @@ internal sealed class SolutionDiscoveryService
                         continue;
                     }
 
-                    types.Add(CreateTypeModel(symbol, projectId, document.FilePath));
-                }
-
-                foreach (var declaration in syntaxRoot.DescendantNodes().OfType<EnumDeclarationSyntax>())
-                {
-                    if (semanticModel.GetDeclaredSymbol(declaration, cancellationToken) is not INamedTypeSymbol symbol)
+                    var typeModel = CreateTypeModel(symbol, projectId, analysisRoot, document.FilePath);
+                    if (discoveredTypeKeys.Add($"{typeModel.ProjectId}|{typeModel.Id}|{typeModel.FilePath}"))
                     {
-                        continue;
+                        types.Add(typeModel);
                     }
-
-                    types.Add(CreateTypeModel(symbol, projectId, document.FilePath));
                 }
             }
         }
@@ -118,7 +114,7 @@ internal sealed class SolutionDiscoveryService
         };
     }
 
-    private static TypeInfoModel CreateTypeModel(INamedTypeSymbol symbol, string projectId, string? filePath)
+    private static TypeInfoModel CreateTypeModel(INamedTypeSymbol symbol, string projectId, string analysisRoot, string? filePath)
     {
         return new TypeInfoModel
         {
@@ -128,8 +124,18 @@ internal sealed class SolutionDiscoveryService
             ProjectId = projectId,
             Kind = symbol.TypeKind.ToString(),
             Accessibility = symbol.DeclaredAccessibility.ToString(),
-            FilePath = filePath,
+            FilePath = MakeRelativePath(analysisRoot, filePath),
         };
+    }
+
+    private static string MakeRelativePath(string analysisRoot, string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        return Path.GetRelativePath(analysisRoot, path);
     }
 
     private static async Task<IReadOnlyList<string>> ReadTargetFrameworksAsync(string? projectFilePath, CancellationToken cancellationToken)

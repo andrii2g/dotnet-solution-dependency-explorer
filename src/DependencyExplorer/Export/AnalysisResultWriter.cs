@@ -32,7 +32,6 @@ internal sealed class AnalysisResultWriter
             "# Dependency Explorer Summary",
             string.Empty,
             $"Input path: `{result.Metadata.InputPath}`",
-            $"Generated at (UTC): `{result.Metadata.GeneratedAtUtc:O}`",
             string.Empty,
             "## Counts",
             string.Empty,
