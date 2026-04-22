@@ -27,6 +27,7 @@ internal static class CommandLineHelp
         writer.WriteLine("Phase 2 currently writes:");
         writer.WriteLine("  summary.md");
         writer.WriteLine("  analysis.json");
+        writer.WriteLine("  graph-classes-global.mmd (unless --graph-format none)");
         writer.WriteLine();
         writer.WriteLine("Reserved for later phases:");
         writer.WriteLine("  --project");

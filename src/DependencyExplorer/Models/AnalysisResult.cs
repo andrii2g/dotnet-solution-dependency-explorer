@@ -11,6 +11,16 @@ internal sealed class AnalysisResult
     public required IReadOnlyList<ProjectInfoModel> Projects { get; init; }
 
     public required IReadOnlyList<TypeInfoModel> Types { get; init; }
+
+    public required IReadOnlyList<DependencyEdgeModel> ProjectDependencies { get; init; }
+
+    public required IReadOnlyList<DependencyEdgeModel> NamespaceDependencies { get; init; }
+
+    public required IReadOnlyList<DependencyEdgeModel> TypeDependencies { get; init; }
+
+    public required IReadOnlyList<DependencyEdgeModel> DiDependencies { get; init; }
+
+    public required AnalysisMetrics Metrics { get; init; }
 }
 
 internal sealed class AnalysisMetadata
@@ -83,4 +93,57 @@ internal sealed class TypeInfoModel
     public string? Accessibility { get; init; }
 
     public string? FilePath { get; init; }
+}
+
+internal sealed class DependencyEdgeModel
+{
+    public required string SourceId { get; init; }
+
+    public required string TargetId { get; init; }
+
+    public required string SourceKind { get; init; }
+
+    public required string TargetKind { get; init; }
+
+    public required string DependencyKind { get; init; }
+
+    public required bool IsExternal { get; init; }
+
+    public string? Label { get; init; }
+}
+
+internal sealed class AnalysisMetrics
+{
+    public required int ProjectCount { get; init; }
+
+    public required int PackageReferenceCount { get; init; }
+
+    public required int DocumentCount { get; init; }
+
+    public required int TypeCount { get; init; }
+
+    public required int ProjectDependencyCount { get; init; }
+
+    public required int NamespaceDependencyCount { get; init; }
+
+    public required int TypeDependencyCount { get; init; }
+
+    public required int InternalTypeDependencyCount { get; init; }
+
+    public required int ExternalTypeDependencyCount { get; init; }
+
+    public required int DiDependencyCount { get; init; }
+
+    public required IReadOnlyList<NodeMetric> TopTypeFanOut { get; init; }
+
+    public required IReadOnlyList<NodeMetric> TopTypeFanIn { get; init; }
+}
+
+internal sealed class NodeMetric
+{
+    public required string Id { get; init; }
+
+    public required string Label { get; init; }
+
+    public required int Value { get; init; }
 }
