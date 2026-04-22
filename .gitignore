@@ -1,6 +1,5 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/src/DependencyExplorer/obj
-/.vs/DependencyExplorer.slnx/FileContentIndex
+bin/
+obj/
+.vs/
+artifacts/
+dependency-explorer-output/

@@ -1,9 +1,11 @@
-﻿namespace DependencyExplorer;
+using DependencyExplorer.Cli;
 
-class Program
+namespace DependencyExplorer;
+
+internal static class Program
 {
-    static void Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        return await CommandLineApplication.RunAsync(args);
     }
 }
