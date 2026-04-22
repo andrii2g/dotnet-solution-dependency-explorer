@@ -118,14 +118,21 @@ internal sealed class AnalysisResultWriter
             .Where(edge => !edge.IsExternal &&
                            string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
                            string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal))
+            .Where(edge => !string.Equals(edge.SourceId, edge.TargetId, StringComparison.Ordinal))
             .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
             .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
             .ThenBy(edge => edge.DependencyKind, StringComparer.Ordinal)
             .ThenBy(edge => edge.Label, StringComparer.Ordinal)
             .ToArray();
+        var visibleEdges = internalEdges
+            .Select(edge => (edge.SourceId, edge.TargetId))
+            .Distinct()
+            .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ToArray();
 
-        var nodeIds = new HashSet<string>(internalEdges.Select(edge => edge.SourceId), StringComparer.Ordinal);
-        nodeIds.UnionWith(internalEdges.Select(edge => edge.TargetId));
+        var nodeIds = new HashSet<string>(visibleEdges.Select(edge => edge.SourceId), StringComparer.Ordinal);
+        nodeIds.UnionWith(visibleEdges.Select(edge => edge.TargetId));
         if (nodeIds.Count == 0)
         {
             nodeIds.UnionWith(result.Types.Select(type => type.Id));
@@ -145,7 +152,7 @@ internal sealed class AnalysisResultWriter
             lines.Add($"    {nodeName}[{EscapeMermaidLabel(label)}]");
         }
 
-        foreach (var edge in internalEdges)
+        foreach (var edge in visibleEdges)
         {
             lines.Add($"    {MakeMermaidNodeId(edge.SourceId)} --> {MakeMermaidNodeId(edge.TargetId)}");
         }

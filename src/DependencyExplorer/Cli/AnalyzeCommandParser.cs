@@ -69,7 +69,7 @@ internal static class AnalyzeCommandParser
                 case "--collapse-packages":
                 case "--skip-classification":
                 case "--skip-di-graph":
-                    errors.Add($"Option '{arg}' is reserved for later phases and is not implemented in Phase 1.");
+                    errors.Add($"Option '{arg}' is not implemented yet.");
                     if (OptionRequiresValue(arg))
                     {
                         _ = ReadRequiredValue(args, ref index, arg, errors);
