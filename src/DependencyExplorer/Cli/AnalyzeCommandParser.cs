@@ -148,7 +148,7 @@ internal sealed class AnalyzeParseResult
     private AnalyzeParseResult(bool isSuccess, bool helpRequested, AnalyzeCommandOptions? options, IReadOnlyList<string> errors)
     {
         IsSuccess = isSuccess;
-        HelpRequested = helpRequested;
+        IsHelpRequested = helpRequested;
         Options = options;
         Errors = errors;
     }

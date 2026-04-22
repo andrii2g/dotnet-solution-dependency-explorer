@@ -24,6 +24,10 @@ internal static class CommandLineHelp
         writer.WriteLine("  --graph-format <value>    mermaid | none. Defaults to mermaid.");
         writer.WriteLine("  --verbose                 Enable verbose console output.");
         writer.WriteLine();
+        writer.WriteLine("Phase 2 currently writes:");
+        writer.WriteLine("  summary.md");
+        writer.WriteLine("  analysis.json");
+        writer.WriteLine();
         writer.WriteLine("Reserved for later phases:");
         writer.WriteLine("  --project");
         writer.WriteLine("  --directory");

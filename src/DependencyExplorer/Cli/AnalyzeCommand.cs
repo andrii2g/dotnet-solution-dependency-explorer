@@ -1,4 +1,7 @@
+using DependencyExplorer.Discovery;
+using DependencyExplorer.Export;
 using DependencyExplorer.Utils;
+using DependencyExplorer.Workspace;
 
 namespace DependencyExplorer.Cli;
 
@@ -11,12 +14,12 @@ internal sealed class AnalyzeCommand
         _logger = logger;
     }
 
-    public Task<int> RunAsync(AnalyzeCommandOptions options)
+    public async Task<int> RunAsync(AnalyzeCommandOptions options)
     {
         if (!File.Exists(options.SolutionPath))
         {
             _logger.Error($"Solution path was not found: {options.SolutionPath}");
-            return Task.FromResult(ExitCodes.InvalidArguments);
+            return ExitCodes.InvalidArguments;
         }
 
         var extension = Path.GetExtension(options.SolutionPath);
@@ -24,7 +27,7 @@ internal sealed class AnalyzeCommand
             !string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase))
         {
             _logger.Error($"The solution path must point to a .sln or .slnx file: {options.SolutionPath}");
-            return Task.FromResult(ExitCodes.InvalidArguments);
+            return ExitCodes.InvalidArguments;
         }
 
         try
@@ -35,17 +38,47 @@ internal sealed class AnalyzeCommand
         {
             _logger.Error($"The output directory could not be created: {options.OutputDirectory}");
             _logger.Error(ex.Message);
-            return Task.FromResult(ExitCodes.InvalidArguments);
+            return ExitCodes.InvalidArguments;
         }
 
-        _logger.Info("Phase 1 CLI shell initialized.");
         _logger.Info($"Solution: {options.SolutionPath}");
         _logger.Info($"Output: {options.OutputDirectory}");
         _logger.Info($"Level: {options.Level}");
         _logger.Info($"Graph format: {options.GraphFormat}");
-        _logger.Verbose("Verbose logging enabled.");
-        _logger.Verbose("Roslyn workspace loading and analysis are not implemented until later phases.");
 
-        return Task.FromResult(ExitCodes.Success);
+        try
+        {
+            var workspaceLoader = new WorkspaceLoader();
+            _logger.Info("Loading solution through MSBuildWorkspace...");
+            var workspaceLoadResult = await workspaceLoader.LoadSolutionAsync(options.SolutionPath, CancellationToken.None);
+            _logger.Verbose($"Loaded {workspaceLoadResult.Projects.Count} projects.");
+
+            foreach (var diagnostic in workspaceLoadResult.Diagnostics)
+            {
+                _logger.Verbose($"workspace {diagnostic.Kind}: {diagnostic.Message}");
+            }
+
+            var discoveryService = new SolutionDiscoveryService();
+            _logger.Info("Discovering projects, package references, and named types...");
+            var analysisResult = await discoveryService.DiscoverAsync(workspaceLoadResult, options, CancellationToken.None);
+
+            var writer = new AnalysisResultWriter();
+            await writer.WriteAsync(analysisResult, options.OutputDirectory, CancellationToken.None);
+
+            _logger.Info($"Projects discovered: {analysisResult.Projects.Count}");
+            _logger.Info($"Named types discovered: {analysisResult.Types.Count}");
+            _logger.Info($"Workspace diagnostics: {analysisResult.Diagnostics.Count}");
+            _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "analysis.json")}");
+            _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "summary.md")}");
+
+            return ExitCodes.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Analysis failed during workspace loading or discovery.");
+            _logger.Error(ex.Message);
+            _logger.Verbose(ex.ToString());
+            return ExitCodes.ExecutionFailed;
+        }
     }
 }
