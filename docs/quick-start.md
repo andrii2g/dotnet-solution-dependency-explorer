@@ -9,7 +9,10 @@ dotnet build ./src/DependencyExplorer/DependencyExplorer.csproj
 Run it against a solution:
 
 ```bash
-./bin/depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/review --level all --verbose
+./bin/depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/sample/review --level all --verbose
+```
+```bash
+./bin/depex analyze --solution ./samples/Fixtures/MixedLegacySample/MixedLegacySample.slnx --output ./artifacts/MixedLegacySample/review --level all --verbose
 ```
 
 `depex` restores the target solution automatically before analysis.
