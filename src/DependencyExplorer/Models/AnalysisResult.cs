@@ -45,6 +45,10 @@ internal sealed class AnalysisOptionsSnapshot
     public required string GraphFormat { get; init; }
 
     public required bool Verbose { get; init; }
+
+    public required bool SkipClassification { get; init; }
+
+    public required bool SkipDiGraph { get; init; }
 }
 
 internal sealed class WorkspaceDiagnosticInfo

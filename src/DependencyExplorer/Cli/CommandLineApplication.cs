@@ -43,6 +43,14 @@ internal static class CommandLineApplication
         {
             Description = "Enable verbose console output.",
         };
+        var skipClassificationOption = new Option<bool>("--skip-classification")
+        {
+            Description = "Skip heuristic classification and emit only non-classification findings.",
+        };
+        var skipDiGraphOption = new Option<bool>("--skip-di-graph")
+        {
+            Description = "Skip constructor dependency extraction.",
+        };
 
         var analyzeCommand = new Command("analyze", "Analyze a .sln or .slnx and emit dependency artifacts.");
         analyzeCommand.Options.Add(solutionOption);
@@ -50,6 +58,8 @@ internal static class CommandLineApplication
         analyzeCommand.Options.Add(levelOption);
         analyzeCommand.Options.Add(graphFormatOption);
         analyzeCommand.Options.Add(verboseOption);
+        analyzeCommand.Options.Add(skipClassificationOption);
+        analyzeCommand.Options.Add(skipDiGraphOption);
 
         AddUnsupportedOption(analyzeCommand, new Option<string>("--project"), expectsValue: true);
         AddUnsupportedOption(analyzeCommand, new Option<string>("--directory"), expectsValue: true);
@@ -65,8 +75,6 @@ internal static class CommandLineApplication
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-cycles"));
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-hubs"));
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--collapse-packages"));
-        AddUnsupportedOption(analyzeCommand, new Option<bool>("--skip-classification"));
-        AddUnsupportedOption(analyzeCommand, new Option<bool>("--skip-di-graph"));
 
         analyzeCommand.SetAction(async parseResult =>
         {
@@ -75,7 +83,9 @@ internal static class CommandLineApplication
                 Path.GetFullPath(parseResult.GetValue(outputOption)!),
                 parseResult.GetValue(levelOption),
                 parseResult.GetValue(graphFormatOption),
-                parseResult.GetValue(verboseOption));
+                parseResult.GetValue(verboseOption),
+                parseResult.GetValue(skipClassificationOption),
+                parseResult.GetValue(skipDiGraphOption));
 
             var logger = new ConsoleLogger(options.Verbose);
             var commandRunner = new AnalyzeCommand(logger);

@@ -5,7 +5,9 @@ internal sealed record AnalyzeCommandOptions(
     string OutputDirectory,
     AnalysisLevel Level,
     GraphFormat GraphFormat,
-    bool Verbose);
+    bool Verbose,
+    bool SkipClassification,
+    bool SkipDiGraph);
 
 internal enum AnalysisLevel
 {
