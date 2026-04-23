@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MixedLegacySample.Core/MixedLegacySample.Core.csproj" />
+  <Project Path="MixedLegacySample.Host/MixedLegacySample.Host.csproj" />
+  <Project Path="MixedLegacySample.Shared/MixedLegacySample.Shared.csproj" />
+</Solution>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LayeredSample.Api/LayeredSample.Api.csproj" />
+  <Project Path="LayeredSample.Application/LayeredSample.Application.csproj" />
+  <Project Path="LayeredSample.Domain/LayeredSample.Domain.csproj" />
+  <Project Path="LayeredSample.Infrastructure/LayeredSample.Infrastructure.csproj" />
+</Solution>
