@@ -139,13 +139,23 @@ internal sealed class ClassificationService
             8));
 
         findings.AddRange(metrics.TopTypeFanOut
-            .Where(metric => metric.Value >= 5)
+            .Where(metric => metrics.OutgoingHubThreshold > 0 && metric.Value >= metrics.OutgoingHubThreshold)
             .Select(metric => new FindingModel
             {
                 Severity = "info",
-                Category = "high-coupling",
+                Category = "outgoing-hub",
                 SubjectId = metric.Id,
-                Message = $"Type '{metric.Label}' has high outgoing coupling ({metric.Value} unique internal targets).",
+                Message = $"Type '{metric.Label}' is an outgoing dependency hub with {metric.Value} unique internal targets.",
+            }));
+
+        findings.AddRange(metrics.TopTypeFanIn
+            .Where(metric => metrics.IncomingHubThreshold > 0 && metric.Value >= metrics.IncomingHubThreshold)
+            .Select(metric => new FindingModel
+            {
+                Severity = "info",
+                Category = "incoming-hub",
+                SubjectId = metric.Id,
+                Message = $"Type '{metric.Label}' is an incoming dependency hub with {metric.Value} unique internal dependents.",
             }));
 
         findings.AddRange(projects

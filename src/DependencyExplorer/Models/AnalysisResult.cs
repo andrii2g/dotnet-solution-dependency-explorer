@@ -166,6 +166,14 @@ internal sealed class AnalysisMetrics
 
     public required int LargestTypeCycleSize { get; init; }
 
+    public required int OutgoingHubCount { get; init; }
+
+    public required int IncomingHubCount { get; init; }
+
+    public required int OutgoingHubThreshold { get; init; }
+
+    public required int IncomingHubThreshold { get; init; }
+
     public required IReadOnlyList<NodeMetric> TopTypeFanOut { get; init; }
 
     public required IReadOnlyList<NodeMetric> TopTypeFanIn { get; init; }

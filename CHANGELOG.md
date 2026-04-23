@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added conservative incoming/outgoing hub detection based on internal dependency fan-in/fan-out.
 - Added a dedicated cycle fixture with positive namespace and type cycle coverage.
 - Moved `depex` launchers into the repo-root `bin/` folder.
 - Added explicit project, namespace, and type cycle detection to metrics and findings.

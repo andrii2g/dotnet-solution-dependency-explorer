@@ -313,6 +313,25 @@ internal sealed class AnalysisResultWriter
         lines.Add($"- Namespace cycles: {metrics.NamespaceCycleCount} (largest: {metrics.LargestNamespaceCycleSize})");
         lines.Add($"- Type cycles: {metrics.TypeCycleCount} (largest: {metrics.LargestTypeCycleSize})");
         lines.Add(string.Empty);
+
+        if (metrics.OutgoingHubThreshold > 0 || metrics.IncomingHubThreshold > 0)
+        {
+            lines.Add("## Hub Summary");
+            lines.Add(string.Empty);
+
+            if (metrics.OutgoingHubThreshold > 0)
+            {
+                lines.Add($"- Outgoing hubs: {metrics.OutgoingHubCount} (threshold: {metrics.OutgoingHubThreshold})");
+            }
+
+            if (metrics.IncomingHubThreshold > 0)
+            {
+                lines.Add($"- Incoming hubs: {metrics.IncomingHubCount} (threshold: {metrics.IncomingHubThreshold})");
+            }
+
+            lines.Add(string.Empty);
+        }
+
         lines.Add("## Key Findings");
         lines.Add(string.Empty);
         if (result.Findings.Count == 0)

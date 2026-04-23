@@ -243,6 +243,18 @@ internal sealed class SolutionDiscoveryService
             .ThenBy(metric => metric.Label, StringComparer.Ordinal)
             .Take(10)
             .ToArray();
+        var allFanOutValues = internalTypeDependencies
+            .GroupBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .Select(group => group.Select(edge => edge.TargetId).Distinct(StringComparer.Ordinal).Count())
+            .OrderByDescending(value => value)
+            .ToArray();
+        var allFanInValues = internalTypeDependencies
+            .GroupBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .Select(group => group.Select(edge => edge.SourceId).Distinct(StringComparer.Ordinal).Count())
+            .OrderByDescending(value => value)
+            .ToArray();
+        var outgoingHubThreshold = DetermineHubThreshold(allFanOutValues);
+        var incomingHubThreshold = DetermineHubThreshold(allFanInValues);
 
         var projectCycles = FindCycles(
             projectDependencies
@@ -280,9 +292,28 @@ internal sealed class SolutionDiscoveryService
             LargestProjectCycleSize = projectCycles.Count == 0 ? 0 : projectCycles.Max(cycle => cycle.Count),
             LargestNamespaceCycleSize = namespaceCycles.Count == 0 ? 0 : namespaceCycles.Max(cycle => cycle.Count),
             LargestTypeCycleSize = typeCycles.Count == 0 ? 0 : typeCycles.Max(cycle => cycle.Count),
+            OutgoingHubCount = outgoingHubThreshold == int.MaxValue ? 0 : allFanOutValues.Count(value => value >= outgoingHubThreshold),
+            IncomingHubCount = incomingHubThreshold == int.MaxValue ? 0 : allFanInValues.Count(value => value >= incomingHubThreshold),
+            OutgoingHubThreshold = outgoingHubThreshold == int.MaxValue ? 0 : outgoingHubThreshold,
+            IncomingHubThreshold = incomingHubThreshold == int.MaxValue ? 0 : incomingHubThreshold,
             TopTypeFanOut = fanOut,
             TopTypeFanIn = fanIn,
         };
+    }
+
+    private static int DetermineHubThreshold(IReadOnlyList<int> values)
+    {
+        if (values.Count < 10)
+        {
+            return int.MaxValue;
+        }
+
+        var ordered = values
+            .OrderBy(value => value)
+            .ToArray();
+        var percentileIndex = (int)Math.Ceiling(ordered.Length * 0.9) - 1;
+        percentileIndex = Math.Clamp(percentileIndex, 0, ordered.Length - 1);
+        return Math.Max(5, ordered[percentileIndex]);
     }
 
     private static IReadOnlyList<IReadOnlyList<string>> FindCycles(IEnumerable<(string SourceId, string TargetId)> edges)
