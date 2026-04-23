@@ -5,4 +5,30 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 
 cd "$REPO_ROOT"
+
+if [[ "${1:-}" == "analyze" ]]; then
+  solution_path=""
+  args=("$@")
+
+  for ((i=1; i<${#args[@]}; i++)); do
+    case "${args[$i]}" in
+      --solution)
+        if (( i + 1 >= ${#args[@]} )); then
+          break
+        fi
+        solution_path="${args[$((i + 1))]}"
+        break
+        ;;
+      --solution=*)
+        solution_path="${args[$i]#--solution=}"
+        break
+        ;;
+    esac
+  done
+
+  if [[ -n "$solution_path" ]]; then
+    dotnet restore "$solution_path"
+  fi
+fi
+
 exec dotnet run --project ./src/DependencyExplorer/DependencyExplorer.csproj -- "$@"

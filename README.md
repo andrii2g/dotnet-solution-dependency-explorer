@@ -17,6 +17,8 @@ Analyze a `.sln` or `.slnx` and generate a compact dependency report with projec
 ./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
+`depex` restores the target solution automatically before analysis.
+
 Windows PowerShell:
 
 ```powershell

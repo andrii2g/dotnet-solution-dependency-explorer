@@ -12,6 +12,8 @@ Run it against a solution:
 ./depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/review --level all --verbose
 ```
 
+`depex` restores the target solution automatically before analysis.
+
 Focused example:
 
 ```bash

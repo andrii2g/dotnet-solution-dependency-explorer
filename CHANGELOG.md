@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Made `depex` restore the target solution automatically before analysis.
 - Normalized `ProjectReference` paths so project graph extraction works on both Windows and Linux.
 - Made project graph extraction use explicit `.csproj` references for stable cross-platform validation.
 - Moved GitHub Actions fixture validation from Windows/PowerShell to Linux/Bash.
