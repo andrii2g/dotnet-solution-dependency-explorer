@@ -2,7 +2,7 @@
 
 ## 2026-04-23
 
-- Added `docs/sample-report.md` from a generated review report and linked it from the README.
+- Added sample reports for README.md.
 - Removed `--graph-format`; Mermaid graphs are now always emitted.
 - Added short repo-root launchers: `./depex` and `./depex.ps1`.
 - Added a root `README.md` with links to the main documentation.
