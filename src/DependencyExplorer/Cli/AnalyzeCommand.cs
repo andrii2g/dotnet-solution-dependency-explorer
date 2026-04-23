@@ -68,8 +68,11 @@ internal sealed class AnalyzeCommand
             _logger.Info($"Projects discovered: {analysisResult.Projects.Count}");
             _logger.Info($"Named types discovered: {analysisResult.Types.Count}");
             _logger.Info($"Workspace diagnostics: {analysisResult.Diagnostics.Count}");
+            _logger.Info($"Findings: {analysisResult.Findings.Count}");
             _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "analysis.json")}");
             _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "summary.md")}");
+            _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "inventory.md")}");
+            _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "violations.md")}");
 
             return ExitCodes.Success;
         }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-23
+
+- Added heuristic classification + inventory + violations.
+
+
 ## 2026-04-22
 
 - Added dependency extraction for project, namespace, type, and constructor-parameter edges.

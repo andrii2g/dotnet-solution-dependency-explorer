@@ -14,11 +14,15 @@ internal sealed class AnalysisResultWriter
     {
         var analysisJsonPath = Path.Combine(outputDirectory, "analysis.json");
         var summaryPath = Path.Combine(outputDirectory, "summary.md");
+        var inventoryPath = Path.Combine(outputDirectory, "inventory.md");
+        var violationsPath = Path.Combine(outputDirectory, "violations.md");
         var globalClassGraphPath = Path.Combine(outputDirectory, "graph-classes-global.mmd");
 
         var json = JsonSerializer.Serialize(result, JsonOptions);
         await File.WriteAllTextAsync(analysisJsonPath, json, cancellationToken);
         await File.WriteAllTextAsync(summaryPath, BuildSummary(result), cancellationToken);
+        await File.WriteAllTextAsync(inventoryPath, BuildInventory(result), cancellationToken);
+        await File.WriteAllTextAsync(violationsPath, BuildViolations(result), cancellationToken);
         if (string.Equals(result.Options.GraphFormat, "Mermaid", StringComparison.OrdinalIgnoreCase))
         {
             await File.WriteAllTextAsync(globalClassGraphPath, BuildGlobalClassMermaid(result), cancellationToken);
@@ -106,6 +110,67 @@ internal sealed class AnalysisResultWriter
             {
                 lines.Add($"- `{metric.Label}`: {metric.Value}");
             }
+        }
+
+        lines.Add(string.Empty);
+        lines.Add("## Key Findings");
+        lines.Add(string.Empty);
+        if (result.Findings.Count == 0)
+        {
+            lines.Add("- None");
+        }
+        else
+        {
+            foreach (var finding in result.Findings.Take(10))
+            {
+                lines.Add($"- [{finding.Severity}] {finding.Message}");
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string BuildInventory(AnalysisResult result)
+    {
+        var lines = new List<string>
+        {
+            "# Dependency Explorer Inventory",
+            string.Empty,
+            "| Project | Classification | Documents | Package refs | Project refs | Notes |",
+            "| --- | --- | ---: | ---: | ---: | --- |",
+        };
+
+        foreach (var project in result.Projects.OrderBy(project => project.Name, StringComparer.Ordinal))
+        {
+            var classification = project.Classification is null
+                ? "Unknown (Low)"
+                : $"{project.Classification.Layer} ({project.Classification.Confidence})";
+            var notes = project.Classification?.Reasons.Count > 0
+                ? string.Join("; ", project.Classification.Reasons.Take(2))
+                : "none";
+            lines.Add($"| {project.Name} | {classification} | {project.DocumentCount} | {project.PackageReferences.Count} | {project.ProjectReferences.Count} | {notes} |");
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string BuildViolations(AnalysisResult result)
+    {
+        var lines = new List<string>
+        {
+            "# Dependency Explorer Findings",
+            string.Empty,
+        };
+
+        if (result.Findings.Count == 0)
+        {
+            lines.Add("No violations or warnings were produced for this run.");
+            return string.Join(Environment.NewLine, lines);
+        }
+
+        foreach (var finding in result.Findings)
+        {
+            lines.Add($"- [{finding.Severity}] {finding.Category}: {finding.Message}");
         }
 
         return string.Join(Environment.NewLine, lines);

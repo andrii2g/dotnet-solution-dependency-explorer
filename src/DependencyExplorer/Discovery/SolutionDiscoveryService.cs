@@ -1,10 +1,10 @@
+using DependencyExplorer.Classification;
 using System.Xml.Linq;
 using DependencyExplorer.Models;
 using DependencyExplorer.Utils;
 using DependencyExplorer.Workspace;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace DependencyExplorer.Discovery;
 
@@ -129,6 +129,10 @@ internal sealed class SolutionDiscoveryService
             .ToArray();
         var metrics = BuildMetrics(projects, types, orderedProjectDependencies, orderedNamespaceDependencies, orderedTypeDependencies, orderedDiDependencies, typeById);
 
+        var classificationService = new ClassificationService();
+        classificationService.Apply(projects, types, orderedTypeDependencies, orderedDiDependencies);
+        var findings = classificationService.BuildFindings(projects, types, orderedTypeDependencies, metrics, workspaceLoadResult.Diagnostics);
+
         return new AnalysisResult
         {
             Metadata = new AnalysisMetadata
@@ -162,6 +166,7 @@ internal sealed class SolutionDiscoveryService
             TypeDependencies = orderedTypeDependencies,
             DiDependencies = orderedDiDependencies,
             Metrics = metrics,
+            Findings = findings,
         };
     }
 
