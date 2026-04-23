@@ -65,7 +65,7 @@ internal sealed class ClassificationService
             {
                 Severity = "warning",
                 Category = "mixed-project",
-                SubjectId = project.Id,
+                SubjectId = project.Name,
                 Message = $"Project '{project.Name}' looks mixed: {string.Join("; ", project.Classification!.Reasons)}",
             }));
 
@@ -102,7 +102,7 @@ internal sealed class ClassificationService
             {
                 Severity = "info",
                 Category = "broad-package-usage",
-                SubjectId = project.Id,
+                SubjectId = project.Name,
                 Message = $"Project '{project.Name}' references many packages ({project.PackageReferences.Count}).",
             }));
 
