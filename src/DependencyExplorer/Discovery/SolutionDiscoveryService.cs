@@ -36,6 +36,7 @@ internal sealed class SolutionDiscoveryService
             var projectId = project.Id.Id.ToString();
             var packageReferences = await ReadPackageReferencesAsync(project.FilePath, cancellationToken);
             var targetFrameworks = await ReadTargetFrameworksAsync(project.FilePath, cancellationToken);
+            var projectReferences = await ReadProjectReferencesAsync(project.FilePath, cancellationToken);
 
             projects.Add(new ProjectInfoModel
             {
@@ -44,11 +45,7 @@ internal sealed class SolutionDiscoveryService
                 FilePath = MakeRelativePath(analysisRoot, project.FilePath),
                 Language = project.Language,
                 TargetFrameworks = targetFrameworks,
-                ProjectReferences = project.ProjectReferences
-                    .Select(reference => workspaceLoadResult.GetProjectName(reference.ProjectId))
-                    .Where(name => !string.IsNullOrWhiteSpace(name))
-                    .OrderBy(name => name, StringComparer.Ordinal)
-                    .ToArray()!,
+                ProjectReferences = projectReferences,
                 PackageReferences = packageReferences,
                 DocumentCount = project.Documents.Count(),
             });
@@ -553,6 +550,29 @@ internal sealed class SolutionDiscoveryService
             .Where(package => !string.IsNullOrWhiteSpace(package.Name))
             .OrderBy(package => package.Name, StringComparer.Ordinal)
             .ThenBy(package => package.Version, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static async Task<IReadOnlyList<string>> ReadProjectReferencesAsync(string? projectFilePath, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectFilePath) || !File.Exists(projectFilePath))
+        {
+            return Array.Empty<string>();
+        }
+
+        await using var stream = File.OpenRead(projectFilePath);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+        var projectDirectory = Path.GetDirectoryName(projectFilePath) ?? Environment.CurrentDirectory;
+
+        return document
+            .Descendants()
+            .Where(element => element.Name.LocalName == "ProjectReference")
+            .Select(element => element.Attribute("Include")?.Value)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => Path.GetFullPath(Path.Combine(projectDirectory, value!)))
+            .Select(path => Path.GetFileNameWithoutExtension(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.Ordinal)
             .ToArray();
     }
 }
