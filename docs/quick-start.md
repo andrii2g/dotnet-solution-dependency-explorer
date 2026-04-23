@@ -9,13 +9,23 @@ dotnet build ./src/DependencyExplorer/DependencyExplorer.csproj
 Run it against a solution:
 
 ```bash
-dotnet ./src/DependencyExplorer/bin/Debug/net8.0/DependencyExplorer.dll analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
 ```
 
 Focused example:
 
 ```bash
-dotnet ./src/DependencyExplorer/bin/Debug/net8.0/DependencyExplorer.dll analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/focus --level class --focus-project LayeredSample.Application --focus-namespace LayeredSample.Application.Invoices --focus-class LayeredSample.Application.Invoices.InvoiceService
+./depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/focus --level class --focus-project LayeredSample.Application --focus-namespace LayeredSample.Application.Invoices --focus-class LayeredSample.Application.Invoices.InvoiceService
+```
+
+Optional wrappers from the repo root:
+
+```bash
+dotnet run --project ./src/DependencyExplorer -- analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+```
+
+```powershell
+& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
 ```
 
 Main outputs:

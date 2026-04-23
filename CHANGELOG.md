@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added short repo-root launchers: `./depex` and `./depex.ps1`.
 - Added a root `README.md` with links to the main documentation.
 - Added a combined `report.md` with embedded Mermaid sections.
 - Added a Bash fixture validator for WSL/Linux usage.
