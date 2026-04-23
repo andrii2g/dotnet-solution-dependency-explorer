@@ -3,3 +3,7 @@ obj/
 .vs/
 artifacts/
 dependency-explorer-output/
+!/bin/
+/bin/*
+!/bin/depex
+!/bin/depex.ps1

@@ -16,7 +16,7 @@ For solutions with runnable projects such as web apps and worker services, the t
 ## Run
 
 ```bash
-./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
+./bin/depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 `depex` restores the target solution automatically before analysis.
@@ -24,5 +24,5 @@ For solutions with runnable projects such as web apps and worker services, the t
 Windows PowerShell:
 
 ```powershell
-& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
+& ./bin/depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```

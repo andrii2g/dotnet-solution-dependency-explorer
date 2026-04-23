@@ -5,8 +5,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent $scriptDir
 
-Push-Location $scriptDir
+Push-Location $repoRoot
 try {
     if ($Arguments.Count -gt 0 -and $Arguments[0] -eq "analyze") {
         $solutionPath = $null

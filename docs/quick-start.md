@@ -9,7 +9,7 @@ dotnet build ./src/DependencyExplorer/DependencyExplorer.csproj
 Run it against a solution:
 
 ```bash
-./depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/review --level all --verbose
+./bin/depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/review --level all --verbose
 ```
 
 `depex` restores the target solution automatically before analysis.
@@ -17,7 +17,7 @@ Run it against a solution:
 Focused example:
 
 ```bash
-./depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/focus --level class --focus-project LayeredSample.Application --focus-namespace LayeredSample.Application.Invoices --focus-class LayeredSample.Application.Invoices.InvoiceService
+./bin/depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/focus --level class --focus-project LayeredSample.Application --focus-namespace LayeredSample.Application.Invoices --focus-class LayeredSample.Application.Invoices.InvoiceService
 ```
 
 Optional wrappers from the repo root:
@@ -27,7 +27,7 @@ dotnet run --project ./src/DependencyExplorer -- analyze --solution ./Dependency
 ```
 
 ```powershell
-& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
+& ./bin/depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 Main outputs:

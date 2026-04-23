@@ -2,19 +2,20 @@
 
 ## 2026-04-23
 
+- Moved `depex` launchers into the repo-root `bin/` folder.
 - Added explicit project, namespace, and type cycle detection to metrics and findings.
 - Improved classification heuristics to reduce noisy mixed-layer results.
 - Added simple percent progress (very useful on big solutions).
 - Added `reports/<project-name>/report.md` focused outputs for runnable projects.
 - Added Mermaid render-limit warnings to `summary.md` and `report.md` for large graphs.
-- Made `depex` restore the target solution automatically before analysis.
+- Made `bin/depex` restore the target solution automatically before analysis.
 - Normalized `ProjectReference` paths so project graph extraction works on both Windows and Linux.
 - Made project graph extraction use explicit `.csproj` references for stable cross-platform validation.
 - Moved GitHub Actions fixture validation from Windows/PowerShell to Linux/Bash.
 - Upgraded fixture solutions and GitHub Actions validation to .NET 10.
 - Added sample reports for README.md.
 - Removed `--graph-format`; Mermaid graphs are now always emitted.
-- Added short repo-root launchers: `./depex` and `./depex.ps1`.
+- Added short launchers: `./bin/depex` and `./bin/depex.ps1`.
 - Added a root `README.md` with links to the main documentation.
 - Added a combined `report.md` with embedded Mermaid sections.
 - Added a Bash fixture validator for WSL/Linux usage.
