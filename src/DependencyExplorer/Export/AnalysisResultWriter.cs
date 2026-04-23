@@ -247,7 +247,8 @@ internal sealed class AnalysisResultWriter
             "graph TD",
         };
 
-        foreach (var nodeId in nodeIds.OrderBy(id => id, StringComparer.Ordinal))
+        foreach (var nodeId in nodeIds
+            .OrderBy(id => ToStableProjectGraphNodeId(id, projectById), StringComparer.Ordinal))
         {
             var label = projectById.TryGetValue(nodeId, out var project)
                 ? project.Name
@@ -255,7 +256,11 @@ internal sealed class AnalysisResultWriter
             lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(nodeId, projectById))}[{EscapeMermaidLabel(label)}]");
         }
 
-        foreach (var edge in edges)
+        foreach (var edge in edges
+            .OrderBy(edge => ToStableProjectGraphNodeId(edge.SourceId, projectById), StringComparer.Ordinal)
+            .ThenBy(edge => ToStableProjectGraphNodeId(edge.TargetId, projectById), StringComparer.Ordinal)
+            .ThenBy(edge => edge.DependencyKind, StringComparer.Ordinal)
+            .ThenBy(edge => edge.Label, StringComparer.Ordinal))
         {
             lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.SourceId, projectById))} --> {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.TargetId, projectById))}");
         }
@@ -295,12 +300,15 @@ internal sealed class AnalysisResultWriter
             "graph TD",
         };
 
-        foreach (var nodeId in nodeIds.OrderBy(id => id, StringComparer.Ordinal))
+        foreach (var nodeId in nodeIds
+            .OrderBy(id => ToStableNamespaceGraphNodeId(id, projectById), StringComparer.Ordinal))
         {
             lines.Add($"    {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(nodeId, projectById))}[{EscapeMermaidLabel(BuildNamespaceLabel(nodeId))}]");
         }
 
-        foreach (var edge in visibleEdges)
+        foreach (var edge in visibleEdges
+            .OrderBy(edge => ToStableNamespaceGraphNodeId(edge.SourceId, projectById), StringComparer.Ordinal)
+            .ThenBy(edge => ToStableNamespaceGraphNodeId(edge.TargetId, projectById), StringComparer.Ordinal))
         {
             lines.Add($"    {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(edge.SourceId, projectById))} --> {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(edge.TargetId, projectById))}");
         }

@@ -1,11 +1,11 @@
 graph TD
-    project__LayeredSample_Domain[LayeredSample.Domain]
-    project__LayeredSample_Infrastructure[LayeredSample.Infrastructure]
     project__LayeredSample_Api[LayeredSample.Api]
     project__LayeredSample_Application[LayeredSample.Application]
-    project__LayeredSample_Infrastructure --> project__LayeredSample_Domain
-    project__LayeredSample_Infrastructure --> project__LayeredSample_Application
+    project__LayeredSample_Domain[LayeredSample.Domain]
+    project__LayeredSample_Infrastructure[LayeredSample.Infrastructure]
+    project__LayeredSample_Api --> project__LayeredSample_Application
     project__LayeredSample_Api --> project__LayeredSample_Domain
     project__LayeredSample_Api --> project__LayeredSample_Infrastructure
-    project__LayeredSample_Api --> project__LayeredSample_Application
     project__LayeredSample_Application --> project__LayeredSample_Domain
+    project__LayeredSample_Infrastructure --> project__LayeredSample_Application
+    project__LayeredSample_Infrastructure --> project__LayeredSample_Domain
