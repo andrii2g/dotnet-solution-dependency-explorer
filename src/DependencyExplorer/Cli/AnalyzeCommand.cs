@@ -44,7 +44,6 @@ internal sealed class AnalyzeCommand
         _logger.Info($"Solution: {options.SolutionPath}");
         _logger.Info($"Output: {options.OutputDirectory}");
         _logger.Info($"Level: {options.Level}");
-        _logger.Info($"Graph format: {options.GraphFormat}");
         _logger.Info($"Skip classification: {options.SkipClassification}");
         _logger.Info($"Skip DI graph: {options.SkipDiGraph}");
         if (!string.IsNullOrWhiteSpace(options.FocusProject))

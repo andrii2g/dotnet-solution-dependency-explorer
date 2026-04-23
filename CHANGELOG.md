@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Removed `--graph-format`; Mermaid graphs are now always emitted.
 - Added short repo-root launchers: `./depex` and `./depex.ps1`.
 - Added a root `README.md` with links to the main documentation.
 - Added a combined `report.md` with embedded Mermaid sections.

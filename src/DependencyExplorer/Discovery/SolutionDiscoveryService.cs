@@ -162,7 +162,6 @@ internal sealed class SolutionDiscoveryService
             {
                 OutputDirectory = options.OutputDirectory,
                 Level = options.Level.ToString(),
-                GraphFormat = options.GraphFormat.ToString(),
                 Verbose = options.Verbose,
                 SkipClassification = options.SkipClassification,
                 SkipDiGraph = options.SkipDiGraph,

@@ -20,6 +20,6 @@ Reference commands for manual inspection:
 
 ```powershell
 dotnet publish ./src/DependencyExplorer/DependencyExplorer.csproj -c Debug -o ./artifacts/manual-tool /p:UseAppHost=false
-dotnet ./artifacts/manual-tool/DependencyExplorer.dll analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/manual-layered --graph-format mermaid --level all --verbose
-dotnet ./artifacts/manual-tool/DependencyExplorer.dll analyze --solution ./samples/Fixtures/MixedLegacySample/MixedLegacySample.slnx --output ./artifacts/manual-mixed --graph-format mermaid --level all --verbose
+dotnet ./artifacts/manual-tool/DependencyExplorer.dll analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/manual-layered --level all --verbose
+dotnet ./artifacts/manual-tool/DependencyExplorer.dll analyze --solution ./samples/Fixtures/MixedLegacySample/MixedLegacySample.slnx --output ./artifacts/manual-mixed --level all --verbose
 ```

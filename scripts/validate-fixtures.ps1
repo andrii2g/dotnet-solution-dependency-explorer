@@ -79,7 +79,7 @@ function Invoke-Analyzer {
     }
 
     New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
-    & dotnet $ToolDll analyze --solution $SolutionPath --output $OutputDirectory --graph-format mermaid --level all --verbose
+    & dotnet $ToolDll analyze --solution $SolutionPath --output $OutputDirectory --level all --verbose
     if ($LASTEXITCODE -ne 0) {
         throw "Analyzer failed for $SolutionPath"
     }

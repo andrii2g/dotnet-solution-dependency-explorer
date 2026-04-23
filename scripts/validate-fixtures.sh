@@ -69,7 +69,6 @@ invoke_analyzer() {
   dotnet "$tool_dll" analyze \
     --solution "$solution_path" \
     --output "$output_directory" \
-    --graph-format mermaid \
     --level all \
     --verbose
 }

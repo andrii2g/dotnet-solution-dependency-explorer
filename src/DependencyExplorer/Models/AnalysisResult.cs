@@ -42,8 +42,6 @@ internal sealed class AnalysisOptionsSnapshot
 
     public required string Level { get; init; }
 
-    public required string GraphFormat { get; init; }
-
     public required bool Verbose { get; init; }
 
     public required bool SkipClassification { get; init; }

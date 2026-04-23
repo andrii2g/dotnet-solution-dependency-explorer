@@ -33,12 +33,6 @@ internal static class CommandLineApplication
             DefaultValueFactory = _ => AnalysisLevel.All,
         };
 
-        var graphFormatOption = new Option<GraphFormat>("--graph-format")
-        {
-            Description = "mermaid | none. Defaults to mermaid.",
-            DefaultValueFactory = _ => GraphFormat.Mermaid,
-        };
-
         var verboseOption = new Option<bool>("--verbose")
         {
             Description = "Enable verbose console output.",
@@ -68,7 +62,6 @@ internal static class CommandLineApplication
         analyzeCommand.Options.Add(solutionOption);
         analyzeCommand.Options.Add(outputOption);
         analyzeCommand.Options.Add(levelOption);
-        analyzeCommand.Options.Add(graphFormatOption);
         analyzeCommand.Options.Add(verboseOption);
         analyzeCommand.Options.Add(skipClassificationOption);
         analyzeCommand.Options.Add(skipDiGraphOption);
@@ -94,7 +87,6 @@ internal static class CommandLineApplication
                 Path.GetFullPath(parseResult.GetValue(solutionOption)!),
                 Path.GetFullPath(parseResult.GetValue(outputOption)!),
                 parseResult.GetValue(levelOption),
-                parseResult.GetValue(graphFormatOption),
                 parseResult.GetValue(verboseOption),
                 parseResult.GetValue(skipClassificationOption),
                 parseResult.GetValue(skipDiGraphOption),

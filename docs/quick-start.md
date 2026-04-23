@@ -9,7 +9,7 @@ dotnet build ./src/DependencyExplorer/DependencyExplorer.csproj
 Run it against a solution:
 
 ```bash
-./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 Focused example:
@@ -21,11 +21,11 @@ Focused example:
 Optional wrappers from the repo root:
 
 ```bash
-dotnet run --project ./src/DependencyExplorer -- analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+dotnet run --project ./src/DependencyExplorer -- analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 ```powershell
-& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 Main outputs:
@@ -47,7 +47,6 @@ Supported options:
 - `--solution <path>`: Solution file to analyze.
 - `--output <directory>`: Where generated files go.
 - `--level <project|namespace|class|all>`: Which graph levels to emit.
-- `--graph-format <mermaid|none>`: Whether to write Mermaid files.
 - `--verbose`: Print more console details.
 - `--skip-classification`: Disable heuristic classification.
 - `--skip-di-graph`: Disable constructor-DI extraction.

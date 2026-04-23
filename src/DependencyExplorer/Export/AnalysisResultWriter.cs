@@ -53,31 +53,28 @@ internal sealed class AnalysisResultWriter
                 focusedClassGraph,
                 focusedDiGraph),
             cancellationToken);
-        if (string.Equals(result.Options.GraphFormat, "Mermaid", StringComparison.OrdinalIgnoreCase))
+        if (projectGraph is not null)
         {
-            if (projectGraph is not null)
-            {
-                await File.WriteAllTextAsync(projectGraphPath, projectGraph, cancellationToken);
-            }
+            await File.WriteAllTextAsync(projectGraphPath, projectGraph, cancellationToken);
+        }
 
-            if (namespaceGraph is not null)
-            {
-                await File.WriteAllTextAsync(namespaceGraphPath, namespaceGraph, cancellationToken);
-            }
+        if (namespaceGraph is not null)
+        {
+            await File.WriteAllTextAsync(namespaceGraphPath, namespaceGraph, cancellationToken);
+        }
 
-            await File.WriteAllTextAsync(globalClassGraphPath, globalClassGraph, cancellationToken);
-            if (globalDiGraph is not null)
-            {
-                await File.WriteAllTextAsync(globalDiGraphPath, globalDiGraph, cancellationToken);
-            }
+        await File.WriteAllTextAsync(globalClassGraphPath, globalClassGraph, cancellationToken);
+        if (globalDiGraph is not null)
+        {
+            await File.WriteAllTextAsync(globalDiGraphPath, globalDiGraph, cancellationToken);
+        }
 
-            if (focusedClassGraph is not null)
+        if (focusedClassGraph is not null)
+        {
+            await File.WriteAllTextAsync(focusedClassGraphPath, focusedClassGraph, cancellationToken);
+            if (focusedDiGraph is not null)
             {
-                await File.WriteAllTextAsync(focusedClassGraphPath, focusedClassGraph, cancellationToken);
-                if (focusedDiGraph is not null)
-                {
-                    await File.WriteAllTextAsync(focusedDiGraphPath, focusedDiGraph, cancellationToken);
-                }
+                await File.WriteAllTextAsync(focusedDiGraphPath, focusedDiGraph, cancellationToken);
             }
         }
     }

@@ -1,4 +1,4 @@
-# A2G.DependencyExplorer
+# Dependency Explorer
 
 Analyze a `.sln` or `.slnx` and generate a compact dependency report with project, namespace, class, and constructor-DI graphs.
 
@@ -12,11 +12,11 @@ Analyze a `.sln` or `.slnx` and generate a compact dependency report with projec
 ## Run
 
 ```bash
-./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
 
 Windows PowerShell:
 
 ```powershell
-& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --graph-format mermaid --level all --verbose
+& ./depex.ps1 analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
 ```
