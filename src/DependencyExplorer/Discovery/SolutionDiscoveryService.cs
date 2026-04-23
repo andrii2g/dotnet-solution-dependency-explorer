@@ -508,7 +508,7 @@ internal sealed class SolutionDiscoveryService
             return string.Empty;
         }
 
-        return Path.GetRelativePath(analysisRoot, path);
+        return Path.GetRelativePath(analysisRoot, path).Replace('\\', '/');
     }
 
     private static async Task<IReadOnlyList<string>> ReadTargetFrameworksAsync(string? projectFilePath, CancellationToken cancellationToken)

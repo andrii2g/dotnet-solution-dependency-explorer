@@ -2,6 +2,8 @@
 
 ## 2026-04-23
 
+- Added a Bash fixture validator for WSL/Linux usage.
+- Added a short quick-start guide under `docs/quick-start.md`.
 - Added focused project/namespace/class Mermaid outputs.
 - Implemented `--skip-classification` and `--skip-di-graph` runtime behavior.
 - Added fixture validation snapshots, script, and CI workflow.

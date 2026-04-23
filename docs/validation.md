@@ -1,9 +1,17 @@
 # Validation
 
-Run the fixture regression harness from the repository root:
+Run the fixture regression harness from the repository root.
+
+Preferred for WSL/Linux:
+
+```bash
+bash ./scripts/validate-fixtures.sh
+```
+
+Windows PowerShell alternative:
 
 ```powershell
-pwsh ./scripts/validate-fixtures.ps1
+& ./scripts/validate-fixtures.ps1
 ```
 
 The script publishes the CLI, analyzes the committed fixture solutions, writes fresh outputs under `artifacts/validation/runs`, normalizes the generated files, and compares them against the committed snapshots in `docs/examples`.
