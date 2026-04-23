@@ -252,12 +252,12 @@ internal sealed class AnalysisResultWriter
             var label = projectById.TryGetValue(nodeId, out var project)
                 ? project.Name
                 : nodeId.StartsWith("package::", StringComparison.Ordinal) ? nodeId["package::".Length..] : nodeId;
-            lines.Add($"    {MakeMermaidNodeId(nodeId)}[{EscapeMermaidLabel(label)}]");
+            lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(nodeId, projectById))}[{EscapeMermaidLabel(label)}]");
         }
 
         foreach (var edge in edges)
         {
-            lines.Add($"    {MakeMermaidNodeId(edge.SourceId)} --> {MakeMermaidNodeId(edge.TargetId)}");
+            lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.SourceId, projectById))} --> {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.TargetId, projectById))}");
         }
 
         return string.Join(Environment.NewLine, lines);
@@ -265,6 +265,7 @@ internal sealed class AnalysisResultWriter
 
     private static string BuildNamespaceMermaid(AnalysisResult result)
     {
+        var projectById = result.Projects.ToDictionary(project => project.Id, StringComparer.Ordinal);
         var edges = result.NamespaceDependencies
             .Where(edge => !edge.IsExternal)
             .Where(edge => !string.Equals(edge.SourceId, edge.TargetId, StringComparison.Ordinal))
@@ -296,12 +297,12 @@ internal sealed class AnalysisResultWriter
 
         foreach (var nodeId in nodeIds.OrderBy(id => id, StringComparer.Ordinal))
         {
-            lines.Add($"    {MakeMermaidNodeId(nodeId)}[{EscapeMermaidLabel(BuildNamespaceLabel(nodeId))}]");
+            lines.Add($"    {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(nodeId, projectById))}[{EscapeMermaidLabel(BuildNamespaceLabel(nodeId))}]");
         }
 
         foreach (var edge in visibleEdges)
         {
-            lines.Add($"    {MakeMermaidNodeId(edge.SourceId)} --> {MakeMermaidNodeId(edge.TargetId)}");
+            lines.Add($"    {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(edge.SourceId, projectById))} --> {MakeMermaidNodeId(ToStableNamespaceGraphNodeId(edge.TargetId, projectById))}");
         }
 
         return string.Join(Environment.NewLine, lines);
@@ -332,5 +333,31 @@ internal sealed class AnalysisResultWriter
     {
         var separatorIndex = namespaceId.IndexOf("::", StringComparison.Ordinal);
         return separatorIndex >= 0 ? namespaceId[(separatorIndex + 2)..] : namespaceId;
+    }
+
+    private static string ToStableProjectGraphNodeId(string nodeId, IReadOnlyDictionary<string, ProjectInfoModel> projectById)
+    {
+        if (projectById.TryGetValue(nodeId, out var project))
+        {
+            return $"project::{project.Name}";
+        }
+
+        return nodeId.StartsWith("package::", StringComparison.Ordinal)
+            ? nodeId
+            : $"project::{nodeId}";
+    }
+
+    private static string ToStableNamespaceGraphNodeId(string namespaceId, IReadOnlyDictionary<string, ProjectInfoModel> projectById)
+    {
+        var separatorIndex = namespaceId.IndexOf("::", StringComparison.Ordinal);
+        if (separatorIndex < 0)
+        {
+            return namespaceId;
+        }
+
+        var projectId = namespaceId[..separatorIndex];
+        var namespaceName = namespaceId[(separatorIndex + 2)..];
+        var projectName = projectById.TryGetValue(projectId, out var project) ? project.Name : projectId;
+        return $"project::{projectName}::namespace::{namespaceName}";
     }
 }
