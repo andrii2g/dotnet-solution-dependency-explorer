@@ -129,9 +129,25 @@ internal sealed class SolutionDiscoveryService
             .ToArray();
         var metrics = BuildMetrics(projects, types, orderedProjectDependencies, orderedNamespaceDependencies, orderedTypeDependencies, orderedDiDependencies, typeById);
 
+        if (options.SkipDiGraph)
+        {
+            orderedDiDependencies = [];
+            metrics = BuildMetrics(projects, types, orderedProjectDependencies, orderedNamespaceDependencies, orderedTypeDependencies, orderedDiDependencies, typeById);
+        }
+
         var classificationService = new ClassificationService();
-        classificationService.Apply(projects, types, orderedTypeDependencies, orderedDiDependencies);
-        var findings = classificationService.BuildFindings(projects, types, orderedTypeDependencies, metrics, workspaceLoadResult.Diagnostics);
+        if (!options.SkipClassification)
+        {
+            classificationService.Apply(projects, types, orderedTypeDependencies, orderedDiDependencies);
+        }
+
+        var findings = classificationService.BuildFindings(
+            projects,
+            types,
+            orderedTypeDependencies,
+            metrics,
+            workspaceLoadResult.Diagnostics,
+            includeClassificationFindings: !options.SkipClassification);
 
         return new AnalysisResult
         {
@@ -148,6 +164,8 @@ internal sealed class SolutionDiscoveryService
                 Level = options.Level.ToString(),
                 GraphFormat = options.GraphFormat.ToString(),
                 Verbose = options.Verbose,
+                SkipClassification = options.SkipClassification,
+                SkipDiGraph = options.SkipDiGraph,
             },
             Diagnostics = workspaceLoadResult.Diagnostics
                 .OrderBy(d => d.Kind, StringComparer.Ordinal)
