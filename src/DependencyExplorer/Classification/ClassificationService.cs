@@ -10,6 +10,11 @@ internal sealed class ClassificationService
     private static readonly string[] PresentationKeywords = ["Controller", "Endpoint", "Host", "Program", "Startup", "Worker"];
     private static readonly string[] InfrastructureSignals = ["EntityFramework", "DbContext", "HttpClient", "Sql", "Dapper", "File", "Storage", "Queue", "Broker"];
     private static readonly string[] PresentationSignals = ["AspNet", "ControllerBase", "Endpoint", "Routing", "Middleware", "Hosting"];
+    private static readonly string[] DomainNamespaceSignals = ["Domain", "Policies", "Rules", "Entities", "Models"];
+    private static readonly string[] ApplicationNamespaceSignals = ["Application", "UseCases", "Handlers", "Commands", "Queries", "Abstractions", "Contracts"];
+    private static readonly string[] InfrastructureNamespaceSignals = ["Infrastructure", "Data", "Persistence", "Files", "Storage", "Redis", "Mq", "Messaging", "Notifications"];
+    private static readonly string[] PresentationNamespaceSignals = ["Api", "Web", "Endpoints", "Controllers", "Hosts", "Workers"];
+    private static readonly string[] AbstractionKeywords = ["Abstraction", "Contract", "Interface"];
 
     public void Apply(
         IReadOnlyList<ProjectInfoModel> projects,
@@ -20,6 +25,9 @@ internal sealed class ClassificationService
         var outgoingByType = typeDependencies
             .GroupBy(edge => edge.SourceId, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<DependencyEdgeModel>)group.ToArray(), StringComparer.Ordinal);
+        var incomingByType = typeDependencies
+            .GroupBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<DependencyEdgeModel>)group.ToArray(), StringComparer.Ordinal);
         var diByType = diDependencies
             .GroupBy(edge => edge.SourceId, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<DependencyEdgeModel>)group.ToArray(), StringComparer.Ordinal);
@@ -29,6 +37,7 @@ internal sealed class ClassificationService
             type.Classification = ClassifyType(
                 type,
                 outgoingByType.GetValueOrDefault(type.Id, Array.Empty<DependencyEdgeModel>()),
+                incomingByType.GetValueOrDefault(type.Id, Array.Empty<DependencyEdgeModel>()),
                 diByType.GetValueOrDefault(type.Id, Array.Empty<DependencyEdgeModel>()));
         }
 
@@ -132,10 +141,21 @@ internal sealed class ClassificationService
     private static ClassificationInfo ClassifyType(
         TypeInfoModel type,
         IReadOnlyList<DependencyEdgeModel> outgoingDependencies,
+        IReadOnlyList<DependencyEdgeModel> incomingDependencies,
         IReadOnlyList<DependencyEdgeModel> constructorDependencies)
     {
         var scores = CreateScoreMap();
         var reasons = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var namespaceLabel = string.IsNullOrWhiteSpace(type.Namespace) ? type.Name : $"{type.Namespace}.{type.Name}";
+        var isInterface = string.Equals(type.Kind, "Interface", StringComparison.OrdinalIgnoreCase);
+        var isPresentationNamespace = ContainsNamespaceSignal(type.Namespace, PresentationNamespaceSignals);
+        var isApplicationNamespace = ContainsNamespaceSignal(type.Namespace, ApplicationNamespaceSignals);
+        var isInfrastructureNamespace = ContainsNamespaceSignal(type.Namespace, InfrastructureNamespaceSignals);
+        var isDomainNamespace = ContainsNamespaceSignal(type.Namespace, DomainNamespaceSignals);
+        var isPresentationTypeName = ContainsAny(type.Name, PresentationKeywords);
+        var isApplicationTypeName = ContainsAny(type.Name, ApplicationKeywords);
+        var isInfrastructureTypeName = ContainsAny(type.Name, InfrastructureKeywords);
+        var hasBusinessName = ContainsAny(type.Name, DomainKeywords);
 
         void AddScore(string layer, int value, string reason)
         {
@@ -149,24 +169,63 @@ internal sealed class ClassificationService
             items.Add(reason);
         }
 
-        if (ContainsAny(type.Name, DomainKeywords))
+        if (isPresentationNamespace)
+        {
+            AddScore("Presentation", 4, "presentation-oriented namespace");
+        }
+
+        if (isApplicationNamespace)
+        {
+            AddScore("Application", 4, "application-oriented namespace");
+        }
+
+        if (isInfrastructureNamespace)
+        {
+            AddScore("Infrastructure", 4, "infrastructure-oriented namespace");
+        }
+
+        if (isDomainNamespace)
+        {
+            AddScore("Domain", 4, "domain-oriented namespace");
+        }
+
+        if (hasBusinessName && !isPresentationTypeName && !isApplicationTypeName && !isInfrastructureTypeName)
         {
             AddScore("Domain", 2, "business-oriented name");
         }
 
-        if (ContainsAny(type.Name, ApplicationKeywords))
+        if (isApplicationTypeName)
         {
             AddScore("Application", 2, "application-style name");
         }
 
-        if (ContainsAny(type.Name, InfrastructureKeywords))
+        if (isInfrastructureTypeName)
         {
-            AddScore("Infrastructure", 2, "infrastructure-style name");
+            if (isInterface || ContainsAny(namespaceLabel, AbstractionKeywords) || isApplicationNamespace)
+            {
+                AddScore("Application", 2, "infrastructure-style abstraction name");
+            }
+            else
+            {
+                AddScore("Infrastructure", 2, "infrastructure-style name");
+            }
         }
 
-        if (ContainsAny(type.Name, PresentationKeywords))
+        if (isPresentationTypeName)
         {
             AddScore("Presentation", 2, "presentation-style name");
+        }
+
+        if (isInterface)
+        {
+            if (isApplicationNamespace || ContainsAny(namespaceLabel, AbstractionKeywords) || ContainsAny(type.Name, AbstractionKeywords))
+            {
+                AddScore("Application", 2, "interface or abstraction contract");
+            }
+            else if (isDomainNamespace)
+            {
+                AddScore("Domain", 1, "domain interface");
+            }
         }
 
         foreach (var dependency in outgoingDependencies)
@@ -182,9 +241,24 @@ internal sealed class ClassificationService
             }
         }
 
+        if (incomingDependencies.Count >= 2 && isDomainNamespace)
+        {
+            AddScore("Domain", 2, "reused by multiple internal dependents");
+        }
+
+        if (incomingDependencies.Count >= 2 && isApplicationNamespace)
+        {
+            AddScore("Application", 1, "referenced by multiple internal dependents");
+        }
+
         if (constructorDependencies.Count >= 2)
         {
             AddScore("Application", 1, "multiple constructor dependencies");
+        }
+
+        if (!isInterface && isInfrastructureNamespace && constructorDependencies.Count > 0)
+        {
+            AddScore("Infrastructure", 1, "infrastructure implementation with constructor wiring");
         }
 
         if (scores["Domain"] > 0 && scores["Infrastructure"] == 0 && scores["Presentation"] == 0)
@@ -197,24 +271,9 @@ internal sealed class ClassificationService
 
     private static ClassificationInfo ClassifyProject(ProjectInfoModel project, IReadOnlyList<TypeInfoModel> projectTypes)
     {
-        var mixedTypes = projectTypes
-            .Where(type => type.Classification?.Layer == "Mixed")
-            .ToArray();
-        if (mixedTypes.Length > 0)
-        {
-            return new ClassificationInfo
-            {
-                Layer = "Mixed",
-                Confidence = "Medium",
-                Reasons = mixedTypes
-                    .Select(type => $"{BuildTypeLabel(type)} classified as Mixed")
-                    .Take(5)
-                    .ToArray(),
-            };
-        }
-
         var scores = CreateScoreMap();
         var reasons = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var projectLabel = $"{project.Name} {project.FilePath}";
 
         void AddScore(string layer, int value, string reason)
         {
@@ -228,6 +287,31 @@ internal sealed class ClassificationService
             items.Add(reason);
         }
 
+        if (ContainsProjectSignal(project, DomainNamespaceSignals))
+        {
+            AddScore("Domain", 3, "domain-oriented project name/path");
+        }
+
+        if (ContainsProjectSignal(project, ApplicationNamespaceSignals))
+        {
+            AddScore("Application", 3, "application-oriented project name/path");
+        }
+
+        if (ContainsProjectSignal(project, InfrastructureNamespaceSignals))
+        {
+            AddScore("Infrastructure", 3, "infrastructure-oriented project name/path");
+        }
+
+        if (ContainsProjectSignal(project, PresentationNamespaceSignals))
+        {
+            AddScore("Presentation", 3, "presentation-oriented project name/path");
+        }
+
+        if (project.IsRunnable)
+        {
+            AddScore("Presentation", 2, "runnable entrypoint project");
+        }
+
         foreach (var type in projectTypes)
         {
             var layer = type.Classification?.Layer;
@@ -236,7 +320,8 @@ internal sealed class ClassificationService
                 continue;
             }
 
-            AddScore(layer, 1, $"{BuildTypeLabel(type)} classified as {layer}");
+            var weight = string.Equals(type.Kind, "Interface", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
+            AddScore(layer, weight, $"{BuildTypeLabel(type)} classified as {layer}");
         }
 
         foreach (var package in project.PackageReferences)
@@ -265,7 +350,7 @@ internal sealed class ClassificationService
             .ToArray();
 
         var top = ordered[0];
-        if (top.Value <= 0)
+        if (top.Value <= 1)
         {
             return new ClassificationInfo
             {
@@ -275,15 +360,15 @@ internal sealed class ClassificationService
             };
         }
 
-        var strongSignals = ordered.Where(item => item.Value >= 2).ToArray();
-        if (strongSignals.Length >= 2)
+        var second = ordered.Length > 1 ? ordered[1] : default;
+        if (second.Value >= 3 && top.Value - second.Value <= 1)
         {
             return new ClassificationInfo
             {
                 Layer = "Mixed",
                 Confidence = "Medium",
-                Reasons = strongSignals
-                    .SelectMany(signal => reasons.GetValueOrDefault(signal.Key, []))
+                Reasons = new[] { top.Key, second.Key }
+                    .SelectMany(signal => reasons.GetValueOrDefault(signal, []))
                     .Distinct(StringComparer.Ordinal)
                     .Take(5)
                     .ToArray(),
@@ -315,6 +400,25 @@ internal sealed class ClassificationService
     private static bool ContainsAny(string value, IReadOnlyList<string> keywords)
     {
         return keywords.Any(keyword => value.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool ContainsNamespaceSignal(string? namespaceValue, IReadOnlyList<string> signals)
+    {
+        if (string.IsNullOrWhiteSpace(namespaceValue))
+        {
+            return false;
+        }
+
+        var segments = namespaceValue
+            .Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return segments.Any(segment => signals.Any(signal => string.Equals(segment, signal, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static bool ContainsProjectSignal(ProjectInfoModel project, IReadOnlyList<string> signals)
+    {
+        return ContainsNamespaceSignal(project.Name.Replace('-', '.'), signals) ||
+               ContainsNamespaceSignal(project.FilePath.Replace('\\', '.').Replace('/', '.'), signals);
     }
 
     private static string BuildTypeLabel(TypeInfoModel type)

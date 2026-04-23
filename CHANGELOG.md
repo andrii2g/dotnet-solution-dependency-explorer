@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Improved classification heuristics to reduce noisy mixed-layer results.
 - Added simple percent progress (very useful on big solutions).
 - Added `reports/<project-name>/report.md` focused outputs for runnable projects.
 - Added Mermaid render-limit warnings to `summary.md` and `report.md` for large graphs.
