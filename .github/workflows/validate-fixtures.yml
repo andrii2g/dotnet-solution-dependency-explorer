@@ -19,4 +19,4 @@ jobs:
 
       - name: Run fixture validation
         shell: bash
-        run: ./scripts/validate-fixtures.sh
+        run: bash ./scripts/validate-fixtures.sh
