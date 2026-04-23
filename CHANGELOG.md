@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Moved GitHub Actions fixture validation from Windows/PowerShell to Linux/Bash.
 - Upgraded fixture solutions and GitHub Actions validation to .NET 10.
 - Added sample reports for README.md.
 - Removed `--graph-format`; Mermaid graphs are now always emitted.
