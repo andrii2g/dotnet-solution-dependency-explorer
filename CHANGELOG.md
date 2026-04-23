@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added a current-behavior specification document for analysis rules, heuristics, findings, and validation.
 - Added conservative incoming/outgoing hub detection based on internal dependency fan-in/fan-out.
 - Added a dedicated cycle fixture with positive namespace and type cycle coverage.
 - Moved `depex` launchers into the repo-root `bin/` folder.

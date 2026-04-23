@@ -6,6 +6,7 @@ For solutions with runnable projects such as web apps and worker services, the t
 
 ## Documentation
 
+- [Specification](./docs/specification.md)
 - [Quick Start](./docs/quick-start.md)
 - [Validation](./docs/validation.md)
 - [Example Outputs](./docs/examples)
