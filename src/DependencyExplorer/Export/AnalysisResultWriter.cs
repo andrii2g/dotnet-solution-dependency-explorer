@@ -5,6 +5,8 @@ namespace A2G.DependencyExplorer.Export;
 
 internal sealed class AnalysisResultWriter
 {
+    private const int MermaidEdgeWarningThreshold = 500;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -97,6 +99,12 @@ internal sealed class AnalysisResultWriter
             string.Empty,
             $"Generated from `{result.Metadata.InputPath}`.",
             string.Empty,
+        };
+
+        AppendRenderWarnings(sections, result, "##");
+
+        sections.AddRange(
+        [
             "## Summary",
             string.Empty,
             TrimMarkdownHeading(summary),
@@ -109,7 +117,7 @@ internal sealed class AnalysisResultWriter
             string.Empty,
             TrimMarkdownHeading(violations),
             string.Empty,
-        };
+        ]);
 
         if (projectGraph is not null)
         {
@@ -179,6 +187,8 @@ internal sealed class AnalysisResultWriter
             "## Workspace Diagnostics",
             string.Empty,
         };
+
+        AppendRenderWarnings(lines, result, "##");
 
         if (result.Diagnostics.Count == 0)
         {
@@ -509,6 +519,61 @@ internal sealed class AnalysisResultWriter
     private static string BuildTypeLabel(TypeInfoModel type)
     {
         return string.IsNullOrWhiteSpace(type.Namespace) ? type.Name : $"{type.Namespace}.{type.Name}";
+    }
+
+    private static void AppendRenderWarnings(List<string> lines, AnalysisResult result, string headingLevel)
+    {
+        var warnings = BuildRenderWarnings(result);
+        if (warnings.Count == 0)
+        {
+            return;
+        }
+
+        lines.Add($"{headingLevel} Graph Rendering Warnings");
+        lines.Add(string.Empty);
+
+        foreach (var warning in warnings)
+        {
+            lines.Add($"- {warning}");
+        }
+
+        lines.Add(string.Empty);
+    }
+
+    private static IReadOnlyList<string> BuildRenderWarnings(AnalysisResult result)
+    {
+        var warnings = new List<string>();
+        var globalClassEdgeCount = result.TypeDependencies
+            .Where(edge => !edge.IsExternal &&
+                           string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                           string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal) &&
+                           !string.Equals(edge.SourceId, edge.TargetId, StringComparison.Ordinal))
+            .Select(edge => (edge.SourceId, edge.TargetId))
+            .Distinct()
+            .Count();
+
+        if (globalClassEdgeCount >= MermaidEdgeWarningThreshold)
+        {
+            warnings.Add($"The full global class graph was generated with {globalClassEdgeCount} edges and may exceed Mermaid render limits in some UIs.");
+        }
+
+        if (!result.Options.SkipDiGraph)
+        {
+            var globalDiEdgeCount = result.DiDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId))
+                .Distinct()
+                .Count();
+
+            if (globalDiEdgeCount >= MermaidEdgeWarningThreshold)
+            {
+                warnings.Add($"The full global DI graph was generated with {globalDiEdgeCount} edges and may exceed Mermaid render limits in some UIs.");
+            }
+        }
+
+        return warnings;
     }
 
     private static void AppendMermaidSection(List<string> sections, string title, string graph)
