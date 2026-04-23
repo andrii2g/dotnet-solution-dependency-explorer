@@ -90,20 +90,27 @@ dotnet publish "$project_path" -c Debug -o "$tool_output" /p:UseAppHost=false
 tool_dll="$tool_output/DependencyExplorer.dll"
 layered_solution="$repo_root/samples/Fixtures/LayeredSample/LayeredSample.slnx"
 mixed_solution="$repo_root/samples/Fixtures/MixedLegacySample/MixedLegacySample.slnx"
+cycle_solution="$repo_root/samples/Fixtures/CycleSample/CycleSample.slnx"
 layered_root="$repo_root/samples/Fixtures/LayeredSample"
 mixed_root="$repo_root/samples/Fixtures/MixedLegacySample"
+cycle_root="$repo_root/samples/Fixtures/CycleSample"
 layered_output="$validation_root/LayeredSample"
 mixed_output="$validation_root/MixedLegacySample"
+cycle_output="$validation_root/CycleSample"
 
 prepare_fixture_solution "$layered_root"
 prepare_fixture_solution "$mixed_root"
+prepare_fixture_solution "$cycle_root"
 
 invoke_analyzer "$tool_dll" "$layered_solution" "$layered_output"
 invoke_analyzer "$tool_dll" "$mixed_solution" "$mixed_output"
+invoke_analyzer "$tool_dll" "$cycle_solution" "$cycle_output"
 
 compare_normalized_file "$examples_root/LayeredSample/graph-projects.mmd" "$layered_output/graph-projects.mmd"
 compare_normalized_file "$examples_root/LayeredSample/graph-namespaces.mmd" "$layered_output/graph-namespaces.mmd"
 compare_normalized_file "$examples_root/LayeredSample/summary.md" "$layered_output/summary.md"
 compare_normalized_file "$examples_root/MixedLegacySample/violations.md" "$mixed_output/violations.md"
+compare_normalized_file "$examples_root/CycleSample/summary.md" "$cycle_output/summary.md"
+compare_normalized_file "$examples_root/CycleSample/violations.md" "$cycle_output/violations.md"
 
 echo "Fixture validation passed."

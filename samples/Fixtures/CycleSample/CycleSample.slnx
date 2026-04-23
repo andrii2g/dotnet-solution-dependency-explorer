@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CycleSample.Core/CycleSample.Core.csproj" />
+  <Project Path="CycleSample.Host/CycleSample.Host.csproj" />
+</Solution>

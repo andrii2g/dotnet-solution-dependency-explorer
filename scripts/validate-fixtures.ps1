@@ -101,16 +101,21 @@ $toolDll = Join-Path $toolOutput "DependencyExplorer.dll"
 
 $layeredSolution = Join-Path $repositoryRoot "samples\Fixtures\LayeredSample\LayeredSample.slnx"
 $mixedSolution = Join-Path $repositoryRoot "samples\Fixtures\MixedLegacySample\MixedLegacySample.slnx"
+$cycleSolution = Join-Path $repositoryRoot "samples\Fixtures\CycleSample\CycleSample.slnx"
 
 $layeredOutput = Join-Path $validationRoot "LayeredSample"
 $mixedOutput = Join-Path $validationRoot "MixedLegacySample"
+$cycleOutput = Join-Path $validationRoot "CycleSample"
 
 Invoke-Analyzer -ToolDll $toolDll -SolutionPath $layeredSolution -OutputDirectory $layeredOutput
 Invoke-Analyzer -ToolDll $toolDll -SolutionPath $mixedSolution -OutputDirectory $mixedOutput
+Invoke-Analyzer -ToolDll $toolDll -SolutionPath $cycleSolution -OutputDirectory $cycleOutput
 
 Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "LayeredSample\graph-projects.mmd") -ActualPath (Join-Path $layeredOutput "graph-projects.mmd") -RepositoryRoot $repositoryRoot
 Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "LayeredSample\graph-namespaces.mmd") -ActualPath (Join-Path $layeredOutput "graph-namespaces.mmd") -RepositoryRoot $repositoryRoot
 Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "LayeredSample\summary.md") -ActualPath (Join-Path $layeredOutput "summary.md") -RepositoryRoot $repositoryRoot
 Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "MixedLegacySample\violations.md") -ActualPath (Join-Path $mixedOutput "violations.md") -RepositoryRoot $repositoryRoot
+Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "CycleSample\summary.md") -ActualPath (Join-Path $cycleOutput "summary.md") -RepositoryRoot $repositoryRoot
+Compare-NormalizedFile -ExpectedPath (Join-Path $examplesRoot "CycleSample\violations.md") -ActualPath (Join-Path $cycleOutput "violations.md") -RepositoryRoot $repositoryRoot
 
 Write-Host "Fixture validation passed." -ForegroundColor Green

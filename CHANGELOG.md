@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added a dedicated cycle fixture with positive namespace and type cycle coverage.
 - Moved `depex` launchers into the repo-root `bin/` folder.
 - Added explicit project, namespace, and type cycle detection to metrics and findings.
 - Improved classification heuristics to reduce noisy mixed-layer results.
