@@ -569,7 +569,10 @@ internal sealed class SolutionDiscoveryService
             .Where(element => element.Name.LocalName == "ProjectReference")
             .Select(element => element.Attribute("Include")?.Value)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => Path.GetFullPath(Path.Combine(projectDirectory, value!)))
+            .Select(value => value!
+                .Replace('\\', Path.DirectorySeparatorChar)
+                .Replace('/', Path.DirectorySeparatorChar))
+            .Select(value => Path.GetFullPath(Path.Combine(projectDirectory, value)))
             .Select(path => Path.GetFileNameWithoutExtension(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(name => name, StringComparer.Ordinal)
