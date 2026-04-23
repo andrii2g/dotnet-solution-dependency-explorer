@@ -21,6 +21,8 @@ internal sealed class AnalysisResult
     public required IReadOnlyList<DependencyEdgeModel> DiDependencies { get; init; }
 
     public required AnalysisMetrics Metrics { get; init; }
+
+    public required IReadOnlyList<FindingModel> Findings { get; init; }
 }
 
 internal sealed class AnalysisMetadata
@@ -69,6 +71,8 @@ internal sealed class ProjectInfoModel
     public required IReadOnlyList<PackageReferenceModel> PackageReferences { get; init; }
 
     public required int DocumentCount { get; init; }
+
+    public ClassificationInfo? Classification { get; set; }
 }
 
 internal sealed class PackageReferenceModel
@@ -93,6 +97,8 @@ internal sealed class TypeInfoModel
     public string? Accessibility { get; init; }
 
     public string? FilePath { get; init; }
+
+    public ClassificationInfo? Classification { get; set; }
 }
 
 internal sealed class DependencyEdgeModel
@@ -146,4 +152,24 @@ internal sealed class NodeMetric
     public required string Label { get; init; }
 
     public required int Value { get; init; }
+}
+
+internal sealed class ClassificationInfo
+{
+    public required string Layer { get; init; }
+
+    public required string Confidence { get; init; }
+
+    public required IReadOnlyList<string> Reasons { get; init; }
+}
+
+internal sealed class FindingModel
+{
+    public required string Severity { get; init; }
+
+    public required string Category { get; init; }
+
+    public required string SubjectId { get; init; }
+
+    public required string Message { get; init; }
 }
