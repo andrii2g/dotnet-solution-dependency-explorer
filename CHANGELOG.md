@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Switched the CLI parser and help system to `System.CommandLine`.
 - Added heuristic classification + inventory + violations.
 
 

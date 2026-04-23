@@ -1,3 +1,4 @@
+using System.CommandLine;
 using A2G.DependencyExplorer.Utils;
 
 namespace A2G.DependencyExplorer.Cli;
@@ -6,48 +7,98 @@ internal static class CommandLineApplication
 {
     public static async Task<int> RunAsync(string[] args)
     {
-        if (args.Length == 0 || IsHelpRequest(args))
+        var solutionOption = new Option<string>("--solution")
         {
-            CommandLineHelp.WriteGeneralHelp(Console.Out);
-            return ExitCodes.Success;
-        }
-
-        var command = args[0];
-        if (!string.Equals(command, "analyze", StringComparison.OrdinalIgnoreCase))
+            Description = "Required path to a .sln or .slnx file.",
+            Required = true,
+        };
+        solutionOption.Validators.Add(result =>
         {
-            Console.Error.WriteLine($"Unknown command '{command}'.");
-            Console.Error.WriteLine();
-            CommandLineHelp.WriteGeneralHelp(Console.Error);
-            return ExitCodes.InvalidArguments;
-        }
-
-        var parseResult = AnalyzeCommandParser.Parse(args[1..]);
-        if (parseResult.IsHelpRequested)
-        {
-            CommandLineHelp.WriteAnalyzeHelp(Console.Out);
-            return ExitCodes.Success;
-        }
-
-        if (!parseResult.IsSuccess)
-        {
-            foreach (var error in parseResult.Errors)
+            var value = result.GetValueOrDefault<string>();
+            if (string.IsNullOrWhiteSpace(value))
             {
-                Console.Error.WriteLine($"error: {error}");
+                result.AddError("Option '--solution' requires a value.");
             }
+        });
 
-            Console.Error.WriteLine();
-            CommandLineHelp.WriteAnalyzeHelp(Console.Error);
-            return ExitCodes.InvalidArguments;
-        }
+        var outputOption = new Option<string>("--output")
+        {
+            Description = "Output directory. Defaults to ./dependency-explorer-output.",
+            DefaultValueFactory = _ => Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "dependency-explorer-output")),
+        };
 
-        var options = parseResult.Options!;
-        var logger = new ConsoleLogger(options.Verbose);
-        var commandRunner = new AnalyzeCommand(logger);
-        return await commandRunner.RunAsync(options);
+        var levelOption = new Option<AnalysisLevel>("--level")
+        {
+            Description = "project | namespace | class | all. Defaults to all.",
+            DefaultValueFactory = _ => AnalysisLevel.All,
+        };
+
+        var graphFormatOption = new Option<GraphFormat>("--graph-format")
+        {
+            Description = "mermaid | none. Defaults to mermaid.",
+            DefaultValueFactory = _ => GraphFormat.Mermaid,
+        };
+
+        var verboseOption = new Option<bool>("--verbose")
+        {
+            Description = "Enable verbose console output.",
+        };
+
+        var analyzeCommand = new Command("analyze", "Analyze a .sln or .slnx and emit dependency artifacts.");
+        analyzeCommand.Options.Add(solutionOption);
+        analyzeCommand.Options.Add(outputOption);
+        analyzeCommand.Options.Add(levelOption);
+        analyzeCommand.Options.Add(graphFormatOption);
+        analyzeCommand.Options.Add(verboseOption);
+
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--project"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--directory"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--include-external"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--exclude-tests"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--exclude-generated"));
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--project-filter"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--namespace-filter"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<int>("--max-class-graph-nodes"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-project"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-namespace"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-class"), expectsValue: true);
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-cycles"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-hubs"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--collapse-packages"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--skip-classification"));
+        AddUnsupportedOption(analyzeCommand, new Option<bool>("--skip-di-graph"));
+
+        analyzeCommand.SetAction(async parseResult =>
+        {
+            var options = new AnalyzeCommandOptions(
+                Path.GetFullPath(parseResult.GetValue(solutionOption)!),
+                Path.GetFullPath(parseResult.GetValue(outputOption)!),
+                parseResult.GetValue(levelOption),
+                parseResult.GetValue(graphFormatOption),
+                parseResult.GetValue(verboseOption));
+
+            var logger = new ConsoleLogger(options.Verbose);
+            var commandRunner = new AnalyzeCommand(logger);
+            return await commandRunner.RunAsync(options);
+        });
+
+        var rootCommand = new RootCommand("Analyze .NET solutions and emit dependency artifacts.");
+        rootCommand.Subcommands.Add(analyzeCommand);
+
+        return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static bool IsHelpRequest(IReadOnlyList<string> args)
+    private static void AddUnsupportedOption<T>(Command command, Option<T> option, bool expectsValue = false)
     {
-        return args.Count == 1 && (args[0] is "-h" or "--help" or "help");
+        option.Hidden = true;
+        option.Validators.Add(result =>
+        {
+            if (expectsValue || result.Tokens.Count > 0)
+            {
+                result.AddError($"Option '{option.Name}' is not implemented yet.");
+            }
+        });
+
+        command.Options.Add(option);
     }
 }
