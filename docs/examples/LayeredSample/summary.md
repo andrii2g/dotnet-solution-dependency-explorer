@@ -2,6 +2,13 @@
 
 Input path: `LayeredSample.slnx`
 
+## Scope
+
+- Level: All
+- Focus project: none
+- Focus namespace: none
+- Focus class: none
+
 ## Counts
 
 - Projects: 4

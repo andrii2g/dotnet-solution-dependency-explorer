@@ -166,6 +166,9 @@ internal sealed class SolutionDiscoveryService
                 Verbose = options.Verbose,
                 SkipClassification = options.SkipClassification,
                 SkipDiGraph = options.SkipDiGraph,
+                FocusProject = options.FocusProject,
+                FocusNamespace = options.FocusNamespace,
+                FocusClass = options.FocusClass,
             },
             Diagnostics = workspaceLoadResult.Diagnostics
                 .OrderBy(d => d.Kind, StringComparer.Ordinal)
