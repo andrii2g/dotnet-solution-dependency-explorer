@@ -56,6 +56,11 @@ internal sealed class AnalysisResultWriter
             $"- External type dependency edges: {metrics.ExternalTypeDependencyCount}",
             $"- Constructor DI edges: {metrics.DiDependencyCount}",
             string.Empty,
+            "## Analysis Options",
+            string.Empty,
+            $"- Classification: {(result.Options.SkipClassification ? "skipped by user request" : "enabled")}",
+            $"- Constructor DI graph: {(result.Options.SkipDiGraph ? "skipped by user request" : "enabled")}",
+            string.Empty,
             "## Workspace Diagnostics",
             string.Empty,
         };
@@ -146,10 +151,14 @@ internal sealed class AnalysisResultWriter
 
         foreach (var project in result.Projects.OrderBy(project => project.Name, StringComparer.Ordinal))
         {
-            var classification = project.Classification is null
-                ? "Unknown (Low)"
-                : $"{project.Classification.Layer} ({project.Classification.Confidence})";
-            var notes = project.Classification?.Reasons.Count > 0
+            var classification = result.Options.SkipClassification
+                ? "Skipped"
+                : project.Classification is null
+                    ? "Unknown (Low)"
+                    : $"{project.Classification.Layer} ({project.Classification.Confidence})";
+            var notes = result.Options.SkipClassification
+                ? "classification skipped"
+                : project.Classification?.Reasons.Count > 0
                 ? string.Join("; ", project.Classification.Reasons.Take(2))
                 : "none";
             lines.Add($"| {project.Name} | {classification} | {project.DocumentCount} | {project.PackageReferences.Count} | {project.ProjectReferences.Count} | {notes} |");
@@ -166,9 +175,17 @@ internal sealed class AnalysisResultWriter
             string.Empty,
         };
 
+        if (result.Options.SkipClassification)
+        {
+            lines.Add("Classification-driven heuristic analysis was skipped by user request.");
+            lines.Add(string.Empty);
+        }
+
         if (result.Findings.Count == 0)
         {
-            lines.Add("No violations or warnings were produced for this run.");
+            lines.Add(result.Options.SkipClassification
+                ? "No non-classification violations or warnings were produced for this run."
+                : "No violations or warnings were produced for this run.");
             return string.Join(Environment.NewLine, lines);
         }
 

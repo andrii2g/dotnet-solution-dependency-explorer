@@ -15,6 +15,11 @@ Input path: `LayeredSample.slnx`
 - External type dependency edges: 14
 - Constructor DI edges: 5
 
+## Analysis Options
+
+- Classification: enabled
+- Constructor DI graph: enabled
+
 ## Workspace Diagnostics
 
 - None

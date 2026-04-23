@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Implemented `--skip-classification` and `--skip-di-graph` runtime behavior.
 - Added fixture validation snapshots, script, and CI workflow.
 - Switched the CLI parser and help system to `System.CommandLine`.
 - Added heuristic classification + inventory + violations.
