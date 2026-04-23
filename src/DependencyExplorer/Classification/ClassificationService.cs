@@ -47,7 +47,8 @@ internal sealed class ClassificationService
         IReadOnlyList<TypeInfoModel> types,
         IReadOnlyList<DependencyEdgeModel> typeDependencies,
         AnalysisMetrics metrics,
-        IReadOnlyList<WorkspaceDiagnosticInfo> diagnostics)
+        IReadOnlyList<WorkspaceDiagnosticInfo> diagnostics,
+        bool includeClassificationFindings)
     {
         var findings = new List<FindingModel>();
 
@@ -59,32 +60,35 @@ internal sealed class ClassificationService
             Message = diagnostic.Message,
         }));
 
-        findings.AddRange(projects
-            .Where(project => project.Classification?.Layer == "Mixed")
-            .Select(project => new FindingModel
-            {
-                Severity = "warning",
-                Category = "mixed-project",
-                SubjectId = project.Name,
-                Message = $"Project '{project.Name}' looks mixed: {string.Join("; ", project.Classification!.Reasons)}",
-            }));
-
-        var typeDepsBySource = typeDependencies
-            .GroupBy(edge => edge.SourceId, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<DependencyEdgeModel>)group.ToArray(), StringComparer.Ordinal);
-
-        findings.AddRange(
-            types
-                .Where(type => type.Classification?.Layer == "Domain")
-                .Where(type => typeDepsBySource.GetValueOrDefault(type.Id, Array.Empty<DependencyEdgeModel>())
-                    .Any(edge => edge.IsExternal && ContainsAny(edge.TargetId, InfrastructureSignals)))
-                .Select(type => new FindingModel
+        if (includeClassificationFindings)
+        {
+            findings.AddRange(projects
+                .Where(project => project.Classification?.Layer == "Mixed")
+                .Select(project => new FindingModel
                 {
                     Severity = "warning",
-                    Category = "infrastructure-leakage",
-                    SubjectId = type.Id,
-                    Message = $"Type '{BuildTypeLabel(type)}' looks domain-oriented but depends on infrastructure-style APIs.",
+                    Category = "mixed-project",
+                    SubjectId = project.Name,
+                    Message = $"Project '{project.Name}' looks mixed: {string.Join("; ", project.Classification!.Reasons)}",
                 }));
+
+            var typeDepsBySource = typeDependencies
+                .GroupBy(edge => edge.SourceId, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => (IReadOnlyList<DependencyEdgeModel>)group.ToArray(), StringComparer.Ordinal);
+
+            findings.AddRange(
+                types
+                    .Where(type => type.Classification?.Layer == "Domain")
+                    .Where(type => typeDepsBySource.GetValueOrDefault(type.Id, Array.Empty<DependencyEdgeModel>())
+                        .Any(edge => edge.IsExternal && ContainsAny(edge.TargetId, InfrastructureSignals)))
+                    .Select(type => new FindingModel
+                    {
+                        Severity = "warning",
+                        Category = "infrastructure-leakage",
+                        SubjectId = type.Id,
+                        Message = $"Type '{BuildTypeLabel(type)}' looks domain-oriented but depends on infrastructure-style APIs.",
+                    }));
+        }
 
         findings.AddRange(metrics.TopTypeFanOut
             .Where(metric => metric.Value >= 5)
