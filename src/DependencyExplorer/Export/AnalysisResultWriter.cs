@@ -235,6 +235,9 @@ internal sealed class AnalysisResultWriter
             $"- Internal type dependency edges: {metrics.InternalTypeDependencyCount}",
             $"- External type dependency edges: {metrics.ExternalTypeDependencyCount}",
             $"- Constructor DI edges: {metrics.DiDependencyCount}",
+            $"- Project cycles: {metrics.ProjectCycleCount}",
+            $"- Namespace cycles: {metrics.NamespaceCycleCount}",
+            $"- Type cycles: {metrics.TypeCycleCount}",
             string.Empty,
             "## Analysis Options",
             string.Empty,
@@ -303,6 +306,12 @@ internal sealed class AnalysisResultWriter
             }
         }
 
+        lines.Add(string.Empty);
+        lines.Add("## Cycle Summary");
+        lines.Add(string.Empty);
+        lines.Add($"- Project cycles: {metrics.ProjectCycleCount} (largest: {metrics.LargestProjectCycleSize})");
+        lines.Add($"- Namespace cycles: {metrics.NamespaceCycleCount} (largest: {metrics.LargestNamespaceCycleSize})");
+        lines.Add($"- Type cycles: {metrics.TypeCycleCount} (largest: {metrics.LargestTypeCycleSize})");
         lines.Add(string.Empty);
         lines.Add("## Key Findings");
         lines.Add(string.Empty);

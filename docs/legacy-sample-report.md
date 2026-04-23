@@ -25,6 +25,9 @@ Input path: `MixedLegacySample.slnx`
 - Internal type dependency edges: 12
 - External type dependency edges: 12
 - Constructor DI edges: 6
+- Project cycles: 0
+- Namespace cycles: 0
+- Type cycles: 0
 
 ## Analysis Options
 
@@ -74,21 +77,27 @@ Input path: `MixedLegacySample.slnx`
 - `MixedLegacySample.Core.Reports.LegacyDashboardService`: 1
 - `MixedLegacySample.Host.Runtime.ConsoleMessageBus`: 1
 
+## Cycle Summary
+
+- Project cycles: 0 (largest: 0)
+- Namespace cycles: 0 (largest: 0)
+- Type cycles: 0 (largest: 0)
+
 ## Key Findings
 
-- [warning] Project 'MixedLegacySample.Core' looks mixed: MixedLegacySample.Core.Billing.LegacyInvoiceRepositoryService classified as Mixed
+- None
 
 ## Inventory
 
 | Project | Classification | Documents | Package refs | Project refs | Notes |
 | --- | --- | ---: | ---: | ---: | --- |
-| MixedLegacySample.Core | Mixed (Medium) | 6 | 0 | 1 | MixedLegacySample.Core.Billing.LegacyInvoiceRepositoryService classified as Mixed |
-| MixedLegacySample.Host | Presentation (Medium) | 6 | 0 | 2 | MixedLegacySample.Host.Runtime.LegacyHost classified as Presentation |
+| MixedLegacySample.Core | Application (High) | 6 | 0 | 1 | MixedLegacySample.Core.Billing.LegacyInvoiceRepositoryService classified as Application; MixedLegacySample.Core.Reports.LegacyDashboardService classified as Application |
+| MixedLegacySample.Host | Presentation (High) | 6 | 0 | 2 | runnable entrypoint project; MixedLegacySample.Host.Runtime.LegacyHost classified as Presentation |
 | MixedLegacySample.Shared | Unknown (Low) | 6 | 0 | 0 | no strong signals |
 
 ## Findings
 
-- [warning] mixed-project: Project 'MixedLegacySample.Core' looks mixed: MixedLegacySample.Core.Billing.LegacyInvoiceRepositoryService classified as Mixed
+No violations or warnings were produced for this run.
 
 ## Project Graph
 

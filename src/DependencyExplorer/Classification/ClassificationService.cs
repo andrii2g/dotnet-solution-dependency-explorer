@@ -54,12 +54,18 @@ internal sealed class ClassificationService
     public IReadOnlyList<FindingModel> BuildFindings(
         IReadOnlyList<ProjectInfoModel> projects,
         IReadOnlyList<TypeInfoModel> types,
+        IReadOnlyList<DependencyEdgeModel> projectDependencies,
+        IReadOnlyList<DependencyEdgeModel> namespaceDependencies,
         IReadOnlyList<DependencyEdgeModel> typeDependencies,
         AnalysisMetrics metrics,
         IReadOnlyList<WorkspaceDiagnosticInfo> diagnostics,
         bool includeClassificationFindings)
     {
         var findings = new List<FindingModel>();
+        var projectById = projects.ToDictionary(project => project.Id, StringComparer.Ordinal);
+        var typeById = types
+            .GroupBy(type => type.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
 
         findings.AddRange(diagnostics.Select(diagnostic => new FindingModel
         {
@@ -99,6 +105,39 @@ internal sealed class ClassificationService
                     }));
         }
 
+        findings.AddRange(BuildCycleFindings(
+            projectDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Project", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Project", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)),
+            "project-cycle",
+            "warning",
+            sourceId => projectById.TryGetValue(sourceId, out var project) ? project.Name : sourceId,
+            5));
+
+        findings.AddRange(BuildCycleFindings(
+            namespaceDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Namespace", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Namespace", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)),
+            "namespace-cycle",
+            "warning",
+            BuildNamespaceLabel,
+            5));
+
+        findings.AddRange(BuildCycleFindings(
+            typeDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)),
+            "type-cycle",
+            "warning",
+            sourceId => typeById.TryGetValue(sourceId, out var type) ? BuildTypeLabel(type) : sourceId,
+            8));
+
         findings.AddRange(metrics.TopTypeFanOut
             .Where(metric => metric.Value >= 5)
             .Select(metric => new FindingModel
@@ -131,7 +170,7 @@ internal sealed class ClassificationService
         }
 
         return findings
-            .OrderBy(finding => finding.Severity, StringComparer.Ordinal)
+            .OrderByDescending(finding => SeverityRank(finding.Severity))
             .ThenBy(finding => finding.Category, StringComparer.Ordinal)
             .ThenBy(finding => finding.SubjectId, StringComparer.Ordinal)
             .ThenBy(finding => finding.Message, StringComparer.Ordinal)
@@ -419,6 +458,136 @@ internal sealed class ClassificationService
     {
         return ContainsNamespaceSignal(project.Name.Replace('-', '.'), signals) ||
                ContainsNamespaceSignal(project.FilePath.Replace('\\', '.').Replace('/', '.'), signals);
+    }
+
+    private static IReadOnlyList<FindingModel> BuildCycleFindings(
+        IEnumerable<(string SourceId, string TargetId)> edges,
+        string category,
+        string severity,
+        Func<string, string> labelSelector,
+        int maxReportedCycles)
+    {
+        var cycles = FindCycles(edges)
+            .Take(maxReportedCycles)
+            .ToArray();
+
+        return cycles
+            .Select(cycle =>
+            {
+                var labels = cycle
+                    .Select(labelSelector)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+
+                return new FindingModel
+                {
+                    Severity = severity,
+                    Category = category,
+                    SubjectId = labels[0],
+                    Message = $"Detected {category.Replace('-', ' ')} involving {string.Join(" -> ", labels)}.",
+                };
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<IReadOnlyList<string>> FindCycles(IEnumerable<(string SourceId, string TargetId)> edges)
+    {
+        var adjacency = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
+        foreach (var (sourceId, targetId) in edges)
+        {
+            if (!adjacency.TryGetValue(sourceId, out var sourceTargets))
+            {
+                sourceTargets = new HashSet<string>(StringComparer.Ordinal);
+                adjacency[sourceId] = sourceTargets;
+            }
+
+            sourceTargets.Add(targetId);
+
+            if (!adjacency.ContainsKey(targetId))
+            {
+                adjacency[targetId] = new HashSet<string>(StringComparer.Ordinal);
+            }
+        }
+
+        var index = 0;
+        var stack = new Stack<string>();
+        var indexByNode = new Dictionary<string, int>(StringComparer.Ordinal);
+        var lowLinkByNode = new Dictionary<string, int>(StringComparer.Ordinal);
+        var onStack = new HashSet<string>(StringComparer.Ordinal);
+        var components = new List<IReadOnlyList<string>>();
+
+        void Visit(string node)
+        {
+            indexByNode[node] = index;
+            lowLinkByNode[node] = index;
+            index++;
+            stack.Push(node);
+            onStack.Add(node);
+
+            foreach (var target in adjacency[node].OrderBy(value => value, StringComparer.Ordinal))
+            {
+                if (!indexByNode.ContainsKey(target))
+                {
+                    Visit(target);
+                    lowLinkByNode[node] = Math.Min(lowLinkByNode[node], lowLinkByNode[target]);
+                }
+                else if (onStack.Contains(target))
+                {
+                    lowLinkByNode[node] = Math.Min(lowLinkByNode[node], indexByNode[target]);
+                }
+            }
+
+            if (lowLinkByNode[node] != indexByNode[node])
+            {
+                return;
+            }
+
+            var component = new List<string>();
+            string currentNode;
+            do
+            {
+                currentNode = stack.Pop();
+                onStack.Remove(currentNode);
+                component.Add(currentNode);
+            }
+            while (!string.Equals(currentNode, node, StringComparison.Ordinal));
+
+            if (component.Count > 1)
+            {
+                components.Add(component.OrderBy(value => value, StringComparer.Ordinal).ToArray());
+            }
+        }
+
+        foreach (var node in adjacency.Keys.OrderBy(value => value, StringComparer.Ordinal))
+        {
+            if (!indexByNode.ContainsKey(node))
+            {
+                Visit(node);
+            }
+        }
+
+        return components
+            .OrderByDescending(component => component.Count)
+            .ThenBy(component => string.Join("|", component), StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string BuildNamespaceLabel(string namespaceId)
+    {
+        var separatorIndex = namespaceId.IndexOf("::", StringComparison.Ordinal);
+        return separatorIndex >= 0 ? namespaceId[(separatorIndex + 2)..] : namespaceId;
+    }
+
+    private static int SeverityRank(string severity)
+    {
+        return severity switch
+        {
+            "error" => 3,
+            "warning" => 2,
+            "info" => 1,
+            _ => 0,
+        };
     }
 
     private static string BuildTypeLabel(TypeInfoModel type)

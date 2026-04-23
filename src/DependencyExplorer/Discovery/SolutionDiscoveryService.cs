@@ -158,6 +158,8 @@ internal sealed class SolutionDiscoveryService
         var findings = classificationService.BuildFindings(
             projects,
             types,
+            orderedProjectDependencies,
+            orderedNamespaceDependencies,
             orderedTypeDependencies,
             metrics,
             workspaceLoadResult.Diagnostics,
@@ -242,6 +244,24 @@ internal sealed class SolutionDiscoveryService
             .Take(10)
             .ToArray();
 
+        var projectCycles = FindCycles(
+            projectDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Project", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Project", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)));
+        var namespaceCycles = FindCycles(
+            namespaceDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Namespace", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Namespace", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)));
+        var typeCycles = FindCycles(
+            internalTypeDependencies
+                .Where(edge => string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal))
+                .Select(edge => (edge.SourceId, edge.TargetId)));
+
         return new AnalysisMetrics
         {
             ProjectCount = projects.Count,
@@ -254,9 +274,100 @@ internal sealed class SolutionDiscoveryService
             InternalTypeDependencyCount = internalTypeDependencies.Length,
             ExternalTypeDependencyCount = externalTypeDependencies.Length,
             DiDependencyCount = diDependencies.Count,
+            ProjectCycleCount = projectCycles.Count,
+            NamespaceCycleCount = namespaceCycles.Count,
+            TypeCycleCount = typeCycles.Count,
+            LargestProjectCycleSize = projectCycles.Count == 0 ? 0 : projectCycles.Max(cycle => cycle.Count),
+            LargestNamespaceCycleSize = namespaceCycles.Count == 0 ? 0 : namespaceCycles.Max(cycle => cycle.Count),
+            LargestTypeCycleSize = typeCycles.Count == 0 ? 0 : typeCycles.Max(cycle => cycle.Count),
             TopTypeFanOut = fanOut,
             TopTypeFanIn = fanIn,
         };
+    }
+
+    private static IReadOnlyList<IReadOnlyList<string>> FindCycles(IEnumerable<(string SourceId, string TargetId)> edges)
+    {
+        var adjacency = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
+        foreach (var (sourceId, targetId) in edges)
+        {
+            if (!adjacency.TryGetValue(sourceId, out var sourceTargets))
+            {
+                sourceTargets = new HashSet<string>(StringComparer.Ordinal);
+                adjacency[sourceId] = sourceTargets;
+            }
+
+            sourceTargets.Add(targetId);
+
+            if (!adjacency.ContainsKey(targetId))
+            {
+                adjacency[targetId] = new HashSet<string>(StringComparer.Ordinal);
+            }
+        }
+
+        var index = 0;
+        var stack = new Stack<string>();
+        var indexByNode = new Dictionary<string, int>(StringComparer.Ordinal);
+        var lowLinkByNode = new Dictionary<string, int>(StringComparer.Ordinal);
+        var onStack = new HashSet<string>(StringComparer.Ordinal);
+        var stronglyConnectedComponents = new List<IReadOnlyList<string>>();
+
+        void Visit(string node)
+        {
+            indexByNode[node] = index;
+            lowLinkByNode[node] = index;
+            index++;
+            stack.Push(node);
+            onStack.Add(node);
+
+            foreach (var target in adjacency[node].OrderBy(value => value, StringComparer.Ordinal))
+            {
+                if (!indexByNode.ContainsKey(target))
+                {
+                    Visit(target);
+                    lowLinkByNode[node] = Math.Min(lowLinkByNode[node], lowLinkByNode[target]);
+                }
+                else if (onStack.Contains(target))
+                {
+                    lowLinkByNode[node] = Math.Min(lowLinkByNode[node], indexByNode[target]);
+                }
+            }
+
+            if (lowLinkByNode[node] != indexByNode[node])
+            {
+                return;
+            }
+
+            var component = new List<string>();
+            string currentNode;
+            do
+            {
+                currentNode = stack.Pop();
+                onStack.Remove(currentNode);
+                component.Add(currentNode);
+            }
+            while (!string.Equals(currentNode, node, StringComparison.Ordinal));
+
+            if (component.Count > 1)
+            {
+                stronglyConnectedComponents.Add(component
+                    .OrderBy(value => value, StringComparer.Ordinal)
+                    .ToArray());
+            }
+        }
+
+        foreach (var node in adjacency.Keys.OrderBy(value => value, StringComparer.Ordinal))
+        {
+            if (!indexByNode.ContainsKey(node))
+            {
+                Visit(node);
+            }
+        }
+
+        return stronglyConnectedComponents
+            .OrderByDescending(component => component.Count)
+            .ThenBy(component => string.Join("|", component), StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static IReadOnlyList<DependencyEdgeModel> BuildProjectDependencies(IReadOnlyList<ProjectInfoModel> projects)

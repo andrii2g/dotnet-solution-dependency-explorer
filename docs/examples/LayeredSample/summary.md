@@ -21,6 +21,9 @@ Input path: `LayeredSample.slnx`
 - Internal type dependency edges: 11
 - External type dependency edges: 14
 - Constructor DI edges: 5
+- Project cycles: 0
+- Namespace cycles: 0
+- Type cycles: 0
 
 ## Analysis Options
 
@@ -78,8 +81,12 @@ Input path: `LayeredSample.slnx`
 - `LayeredSample.Domain.Policies.DiscountPolicy`: 2
 - `LayeredSample.Application.Invoices.InvoiceQueryHandler`: 1
 
+## Cycle Summary
+
+- Project cycles: 0 (largest: 0)
+- Namespace cycles: 0 (largest: 0)
+- Type cycles: 0 (largest: 0)
+
 ## Key Findings
 
-- [warning] Project 'LayeredSample.Api' looks mixed: LayeredSample.Api.Endpoints.OrdersController classified as Mixed
-- [warning] Project 'LayeredSample.Application' looks mixed: LayeredSample.Application.Abstractions.IOrderRepository classified as Mixed; LayeredSample.Application.Invoices.InvoiceQueryHandler classified as Mixed; LayeredSample.Application.Invoices.InvoiceService classified as Mixed
-- [warning] Project 'LayeredSample.Infrastructure' looks mixed: LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Mixed; LayeredSample.Infrastructure.Files.FileInvoiceGateway classified as Mixed
+- None

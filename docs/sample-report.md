@@ -25,6 +25,9 @@ Input path: `LayeredSample.slnx`
 - Internal type dependency edges: 11
 - External type dependency edges: 14
 - Constructor DI edges: 5
+- Project cycles: 0
+- Namespace cycles: 0
+- Type cycles: 0
 
 ## Analysis Options
 
@@ -82,26 +85,28 @@ Input path: `LayeredSample.slnx`
 - `LayeredSample.Domain.Policies.DiscountPolicy`: 2
 - `LayeredSample.Application.Invoices.InvoiceQueryHandler`: 1
 
+## Cycle Summary
+
+- Project cycles: 0 (largest: 0)
+- Namespace cycles: 0 (largest: 0)
+- Type cycles: 0 (largest: 0)
+
 ## Key Findings
 
-- [warning] Project 'LayeredSample.Api' looks mixed: LayeredSample.Api.Endpoints.OrdersController classified as Mixed
-- [warning] Project 'LayeredSample.Application' looks mixed: LayeredSample.Application.Abstractions.IOrderRepository classified as Mixed; LayeredSample.Application.Invoices.InvoiceQueryHandler classified as Mixed; LayeredSample.Application.Invoices.InvoiceService classified as Mixed
-- [warning] Project 'LayeredSample.Infrastructure' looks mixed: LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Mixed; LayeredSample.Infrastructure.Files.FileInvoiceGateway classified as Mixed
+- None
 
 ## Inventory
 
 | Project | Classification | Documents | Package refs | Project refs | Notes |
 | --- | --- | ---: | ---: | ---: | --- |
-| LayeredSample.Api | Mixed (Medium) | 5 | 0 | 2 | LayeredSample.Api.Endpoints.OrdersController classified as Mixed |
-| LayeredSample.Application | Mixed (Medium) | 6 | 0 | 1 | LayeredSample.Application.Abstractions.IOrderRepository classified as Mixed; LayeredSample.Application.Invoices.InvoiceQueryHandler classified as Mixed |
-| LayeredSample.Domain | Domain (Medium) | 7 | 0 | 0 | LayeredSample.Domain.Orders.Order classified as Domain; LayeredSample.Domain.Policies.DiscountPolicy classified as Domain |
-| LayeredSample.Infrastructure | Mixed (Medium) | 5 | 0 | 2 | LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Mixed; LayeredSample.Infrastructure.Files.FileInvoiceGateway classified as Mixed |
+| LayeredSample.Api | Presentation (High) | 5 | 0 | 2 | presentation-oriented project name/path; runnable entrypoint project |
+| LayeredSample.Application | Application (High) | 6 | 0 | 1 | application-oriented project name/path; LayeredSample.Application.Abstractions.IOrderRepository classified as Application |
+| LayeredSample.Domain | Domain (High) | 7 | 0 | 0 | domain-oriented project name/path; LayeredSample.Domain.Orders.Order classified as Domain |
+| LayeredSample.Infrastructure | Infrastructure (High) | 5 | 0 | 2 | infrastructure-oriented project name/path; LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Infrastructure |
 
 ## Findings
 
-- [warning] mixed-project: Project 'LayeredSample.Api' looks mixed: LayeredSample.Api.Endpoints.OrdersController classified as Mixed
-- [warning] mixed-project: Project 'LayeredSample.Application' looks mixed: LayeredSample.Application.Abstractions.IOrderRepository classified as Mixed; LayeredSample.Application.Invoices.InvoiceQueryHandler classified as Mixed; LayeredSample.Application.Invoices.InvoiceService classified as Mixed
-- [warning] mixed-project: Project 'LayeredSample.Infrastructure' looks mixed: LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Mixed; LayeredSample.Infrastructure.Files.FileInvoiceGateway classified as Mixed
+No violations or warnings were produced for this run.
 
 ## Project Graph
 

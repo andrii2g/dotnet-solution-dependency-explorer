@@ -1,3 +1,3 @@
 # Dependency Explorer Findings
 
-- [warning] mixed-project: Project 'MixedLegacySample.Core' looks mixed: MixedLegacySample.Core.Billing.LegacyInvoiceRepositoryService classified as Mixed
+No violations or warnings were produced for this run.

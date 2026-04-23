@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added explicit project, namespace, and type cycle detection to metrics and findings.
 - Improved classification heuristics to reduce noisy mixed-layer results.
 - Added simple percent progress (very useful on big solutions).
 - Added `reports/<project-name>/report.md` focused outputs for runnable projects.

@@ -154,6 +154,18 @@ internal sealed class AnalysisMetrics
 
     public required int DiDependencyCount { get; init; }
 
+    public required int ProjectCycleCount { get; init; }
+
+    public required int NamespaceCycleCount { get; init; }
+
+    public required int TypeCycleCount { get; init; }
+
+    public required int LargestProjectCycleSize { get; init; }
+
+    public required int LargestNamespaceCycleSize { get; init; }
+
+    public required int LargestTypeCycleSize { get; init; }
+
     public required IReadOnlyList<NodeMetric> TopTypeFanOut { get; init; }
 
     public required IReadOnlyList<NodeMetric> TopTypeFanIn { get; init; }
