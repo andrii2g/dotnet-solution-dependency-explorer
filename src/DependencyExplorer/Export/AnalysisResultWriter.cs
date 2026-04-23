@@ -411,7 +411,9 @@ internal sealed class AnalysisResultWriter
 
     private static string BuildTypeMermaid(AnalysisResult result, ISet<string>? focusTypeIds)
     {
-        var typeById = result.Types.ToDictionary(type => type.Id, StringComparer.Ordinal);
+        var typeById = result.Types
+            .GroupBy(type => type.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var internalEdges = result.TypeDependencies
             .Where(edge => !edge.IsExternal &&
                            string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
@@ -461,7 +463,9 @@ internal sealed class AnalysisResultWriter
 
     private static string BuildDiMermaid(AnalysisResult result, bool focused)
     {
-        var typeById = result.Types.ToDictionary(type => type.Id, StringComparer.Ordinal);
+        var typeById = result.Types
+            .GroupBy(type => type.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var focusTypeIds = GetFocusedTypeIds(result, focused);
         var visibleEdges = result.DiDependencies
             .Where(edge => !edge.IsExternal &&

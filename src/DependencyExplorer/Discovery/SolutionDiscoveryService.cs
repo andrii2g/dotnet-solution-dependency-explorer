@@ -83,7 +83,9 @@ internal sealed class SolutionDiscoveryService
             }
         }
 
-        var typeById = types.ToDictionary(type => type.Id, StringComparer.Ordinal);
+        var typeById = types
+            .GroupBy(type => type.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var projectById = projects.ToDictionary(project => project.Id, StringComparer.Ordinal);
         var projectDependencies = BuildProjectDependencies(projects);
         var namespaceDependencies = new HashSet<DependencyEdgeModel>(DependencyEdgeComparer.Instance);
