@@ -7,7 +7,10 @@ internal sealed record AnalyzeCommandOptions(
     GraphFormat GraphFormat,
     bool Verbose,
     bool SkipClassification,
-    bool SkipDiGraph);
+    bool SkipDiGraph,
+    string? FocusProject,
+    string? FocusNamespace,
+    string? FocusClass);
 
 internal enum AnalysisLevel
 {

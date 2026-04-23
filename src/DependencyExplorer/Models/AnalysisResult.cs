@@ -49,6 +49,12 @@ internal sealed class AnalysisOptionsSnapshot
     public required bool SkipClassification { get; init; }
 
     public required bool SkipDiGraph { get; init; }
+
+    public string? FocusProject { get; init; }
+
+    public string? FocusNamespace { get; init; }
+
+    public string? FocusClass { get; init; }
 }
 
 internal sealed class WorkspaceDiagnosticInfo

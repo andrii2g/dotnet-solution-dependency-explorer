@@ -47,6 +47,20 @@ internal sealed class AnalyzeCommand
         _logger.Info($"Graph format: {options.GraphFormat}");
         _logger.Info($"Skip classification: {options.SkipClassification}");
         _logger.Info($"Skip DI graph: {options.SkipDiGraph}");
+        if (!string.IsNullOrWhiteSpace(options.FocusProject))
+        {
+            _logger.Info($"Focus project: {options.FocusProject}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.FocusNamespace))
+        {
+            _logger.Info($"Focus namespace: {options.FocusNamespace}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.FocusClass))
+        {
+            _logger.Info($"Focus class: {options.FocusClass}");
+        }
 
         try
         {

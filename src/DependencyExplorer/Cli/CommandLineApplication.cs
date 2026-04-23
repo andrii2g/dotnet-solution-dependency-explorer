@@ -51,6 +51,18 @@ internal static class CommandLineApplication
         {
             Description = "Skip constructor dependency extraction.",
         };
+        var focusProjectOption = new Option<string?>("--focus-project")
+        {
+            Description = "Narrow focused outputs to one project name while keeping full-scope analysis.",
+        };
+        var focusNamespaceOption = new Option<string?>("--focus-namespace")
+        {
+            Description = "Narrow focused outputs to one namespace or namespace prefix.",
+        };
+        var focusClassOption = new Option<string?>("--focus-class")
+        {
+            Description = "Narrow focused outputs to one full type name.",
+        };
 
         var analyzeCommand = new Command("analyze", "Analyze a .sln or .slnx and emit dependency artifacts.");
         analyzeCommand.Options.Add(solutionOption);
@@ -60,6 +72,9 @@ internal static class CommandLineApplication
         analyzeCommand.Options.Add(verboseOption);
         analyzeCommand.Options.Add(skipClassificationOption);
         analyzeCommand.Options.Add(skipDiGraphOption);
+        analyzeCommand.Options.Add(focusProjectOption);
+        analyzeCommand.Options.Add(focusNamespaceOption);
+        analyzeCommand.Options.Add(focusClassOption);
 
         AddUnsupportedOption(analyzeCommand, new Option<string>("--project"), expectsValue: true);
         AddUnsupportedOption(analyzeCommand, new Option<string>("--directory"), expectsValue: true);
@@ -69,9 +84,6 @@ internal static class CommandLineApplication
         AddUnsupportedOption(analyzeCommand, new Option<string>("--project-filter"), expectsValue: true);
         AddUnsupportedOption(analyzeCommand, new Option<string>("--namespace-filter"), expectsValue: true);
         AddUnsupportedOption(analyzeCommand, new Option<int>("--max-class-graph-nodes"), expectsValue: true);
-        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-project"), expectsValue: true);
-        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-namespace"), expectsValue: true);
-        AddUnsupportedOption(analyzeCommand, new Option<string>("--focus-class"), expectsValue: true);
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-cycles"));
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--detect-hubs"));
         AddUnsupportedOption(analyzeCommand, new Option<bool>("--collapse-packages"));
@@ -85,7 +97,10 @@ internal static class CommandLineApplication
                 parseResult.GetValue(graphFormatOption),
                 parseResult.GetValue(verboseOption),
                 parseResult.GetValue(skipClassificationOption),
-                parseResult.GetValue(skipDiGraphOption));
+                parseResult.GetValue(skipDiGraphOption),
+                parseResult.GetValue(focusProjectOption),
+                parseResult.GetValue(focusNamespaceOption),
+                parseResult.GetValue(focusClassOption));
 
             var logger = new ConsoleLogger(options.Verbose);
             var commandRunner = new AnalyzeCommand(logger);
