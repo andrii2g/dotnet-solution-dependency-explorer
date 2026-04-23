@@ -19,7 +19,7 @@ Input path: `LayeredSample.slnx`
 - Package references: 0
 - Documents: 23
 - Named types: 8
-- Project dependency edges: 6
+- Project dependency edges: 5
 - Namespace dependency edges: 19
 - Type dependency edges: 25
 - Internal type dependency edges: 11
@@ -39,28 +39,28 @@ Input path: `LayeredSample.slnx`
 
 - `LayeredSample.Api`
   Path: `LayeredSample.Api/LayeredSample.Api.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 5
-  Project references: LayeredSample.Application, LayeredSample.Domain, LayeredSample.Infrastructure
+  Project references: LayeredSample.Application, LayeredSample.Infrastructure
   Package references: none
 
 - `LayeredSample.Application`
   Path: `LayeredSample.Application/LayeredSample.Application.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 6
   Project references: LayeredSample.Domain
   Package references: none
 
 - `LayeredSample.Domain`
   Path: `LayeredSample.Domain/LayeredSample.Domain.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 7
   Project references: none
   Package references: none
 
 - `LayeredSample.Infrastructure`
   Path: `LayeredSample.Infrastructure/LayeredSample.Infrastructure.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 5
   Project references: LayeredSample.Application, LayeredSample.Domain
   Package references: none
@@ -92,7 +92,7 @@ Input path: `LayeredSample.slnx`
 
 | Project | Classification | Documents | Package refs | Project refs | Notes |
 | --- | --- | ---: | ---: | ---: | --- |
-| LayeredSample.Api | Mixed (Medium) | 5 | 0 | 3 | LayeredSample.Api.Endpoints.OrdersController classified as Mixed |
+| LayeredSample.Api | Mixed (Medium) | 5 | 0 | 2 | LayeredSample.Api.Endpoints.OrdersController classified as Mixed |
 | LayeredSample.Application | Mixed (Medium) | 6 | 0 | 1 | LayeredSample.Application.Abstractions.IOrderRepository classified as Mixed; LayeredSample.Application.Invoices.InvoiceQueryHandler classified as Mixed |
 | LayeredSample.Domain | Domain (Medium) | 7 | 0 | 0 | LayeredSample.Domain.Orders.Order classified as Domain; LayeredSample.Domain.Policies.DiscountPolicy classified as Domain |
 | LayeredSample.Infrastructure | Mixed (Medium) | 5 | 0 | 2 | LayeredSample.Infrastructure.Data.SqlOrderRepository classified as Mixed; LayeredSample.Infrastructure.Files.FileInvoiceGateway classified as Mixed |
@@ -112,7 +112,6 @@ graph TD
     project__LayeredSample_Domain[LayeredSample.Domain]
     project__LayeredSample_Infrastructure[LayeredSample.Infrastructure]
     project__LayeredSample_Api --> project__LayeredSample_Application
-    project__LayeredSample_Api --> project__LayeredSample_Domain
     project__LayeredSample_Api --> project__LayeredSample_Infrastructure
     project__LayeredSample_Application --> project__LayeredSample_Domain
     project__LayeredSample_Infrastructure --> project__LayeredSample_Application

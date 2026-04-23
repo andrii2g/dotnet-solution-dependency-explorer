@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Upgraded fixture solutions and GitHub Actions validation to .NET 10.
 - Added sample reports for README.md.
 - Removed `--graph-format`; Mermaid graphs are now always emitted.
 - Added short repo-root launchers: `./depex` and `./depex.ps1`.

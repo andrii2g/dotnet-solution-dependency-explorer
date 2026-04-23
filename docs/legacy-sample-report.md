@@ -39,21 +39,21 @@ Input path: `MixedLegacySample.slnx`
 
 - `MixedLegacySample.Core`
   Path: `MixedLegacySample.Core/MixedLegacySample.Core.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 6
   Project references: MixedLegacySample.Shared
   Package references: none
 
 - `MixedLegacySample.Host`
   Path: `MixedLegacySample.Host/MixedLegacySample.Host.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 6
   Project references: MixedLegacySample.Core, MixedLegacySample.Shared
   Package references: none
 
 - `MixedLegacySample.Shared`
   Path: `MixedLegacySample.Shared/MixedLegacySample.Shared.csproj`
-  Frameworks: net8.0
+  Frameworks: net10.0
   Documents: 6
   Project references: none
   Package references: none
