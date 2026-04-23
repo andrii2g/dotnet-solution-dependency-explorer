@@ -12,7 +12,11 @@ internal sealed class AnalysisResultWriter
         WriteIndented = true,
     };
 
-    public async Task WriteAsync(AnalysisResult result, string outputDirectory, CancellationToken cancellationToken)
+    public async Task WriteAsync(
+        AnalysisResult result,
+        string outputDirectory,
+        CancellationToken cancellationToken,
+        Action<int, string>? reportProgress = null)
     {
         var analysisJsonPath = Path.Combine(outputDirectory, "analysis.json");
         var reportPath = Path.Combine(outputDirectory, "report.md");
@@ -80,10 +84,16 @@ internal sealed class AnalysisResultWriter
             }
         }
 
-        await WriteRunnableProjectReportsAsync(result, outputDirectory, cancellationToken);
+        reportProgress?.Invoke(85, "Writing global reports...");
+        await WriteRunnableProjectReportsAsync(result, outputDirectory, cancellationToken, reportProgress);
+        reportProgress?.Invoke(95, "Finishing output...");
     }
 
-    private static async Task WriteRunnableProjectReportsAsync(AnalysisResult result, string outputDirectory, CancellationToken cancellationToken)
+    private static async Task WriteRunnableProjectReportsAsync(
+        AnalysisResult result,
+        string outputDirectory,
+        CancellationToken cancellationToken,
+        Action<int, string>? reportProgress)
     {
         var runnableProjects = result.Projects
             .Where(project => project.IsRunnable)
@@ -98,8 +108,9 @@ internal sealed class AnalysisResultWriter
         var reportsRoot = Path.Combine(outputDirectory, "reports");
         Directory.CreateDirectory(reportsRoot);
 
-        foreach (var project in runnableProjects)
+        for (var index = 0; index < runnableProjects.Length; index++)
         {
+            var project = runnableProjects[index];
             var projectDirectory = Path.Combine(reportsRoot, SanitizePathSegment(project.Name));
             Directory.CreateDirectory(projectDirectory);
 
@@ -121,6 +132,9 @@ internal sealed class AnalysisResultWriter
             {
                 await File.WriteAllTextAsync(Path.Combine(projectDirectory, "graph-di-focused.mmd"), diGraph, cancellationToken);
             }
+
+            var percent = 85 + ((index + 1) * 10 / runnableProjects.Length);
+            reportProgress?.Invoke(percent, $"Writing runnable project report {index + 1}/{runnableProjects.Length}: {project.Name}");
         }
     }
 

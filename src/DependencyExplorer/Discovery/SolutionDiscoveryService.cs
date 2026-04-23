@@ -18,15 +18,19 @@ internal sealed class SolutionDiscoveryService
     public async Task<AnalysisResult> DiscoverAsync(
         WorkspaceLoadResult workspaceLoadResult,
         Cli.AnalyzeCommandOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<int, string>? reportProgress = null)
     {
         var analysisRoot = Path.GetDirectoryName(options.SolutionPath) ?? Environment.CurrentDirectory;
         var projects = new List<ProjectInfoModel>();
         var types = new List<TypeInfoModel>();
         var declaredTypes = new List<DeclaredTypeContext>();
         var discoveredTypeKeys = new HashSet<string>(StringComparer.Ordinal);
+        var orderedWorkspaceProjects = workspaceLoadResult.Projects.OrderBy(p => p.Name, StringComparer.Ordinal).ToArray();
+        var supportedProjectCount = orderedWorkspaceProjects.Count(project => _supportedLanguages.Contains(project.Language));
+        var processedProjectCount = 0;
 
-        foreach (var project in workspaceLoadResult.Projects.OrderBy(p => p.Name, StringComparer.Ordinal))
+        foreach (var project in orderedWorkspaceProjects)
         {
             if (!_supportedLanguages.Contains(project.Language))
             {
@@ -84,6 +88,13 @@ internal sealed class SolutionDiscoveryService
                         declaredTypes.Add(new DeclaredTypeContext(symbol, project, document, typeModel));
                     }
                 }
+            }
+
+            processedProjectCount++;
+            if (supportedProjectCount > 0)
+            {
+                var percent = 15 + (processedProjectCount * 60 / supportedProjectCount);
+                reportProgress?.Invoke(percent, $"Scanning project {processedProjectCount}/{supportedProjectCount}: {project.Name}");
             }
         }
 

@@ -26,4 +26,9 @@ internal sealed class ConsoleLogger
             Console.WriteLine($"[verbose] {message}");
         }
     }
+
+    public void Progress(int percent, string message)
+    {
+        Console.WriteLine($"[{percent,3}%] {message}");
+    }
 }

@@ -63,9 +63,12 @@ internal sealed class AnalyzeCommand
 
         try
         {
+            var progress = new ProgressReporter(_logger);
+            progress.Report(5, "Loading solution...");
             var workspaceLoader = new WorkspaceLoader();
             _logger.Info("Loading solution through MSBuildWorkspace...");
             var workspaceLoadResult = await workspaceLoader.LoadSolutionAsync(options.SolutionPath, CancellationToken.None);
+            progress.Report(10, $"Workspace loaded: {workspaceLoadResult.Projects.Count} projects");
             _logger.Verbose($"Loaded {workspaceLoadResult.Projects.Count} projects.");
 
             foreach (var diagnostic in workspaceLoadResult.Diagnostics)
@@ -74,11 +77,13 @@ internal sealed class AnalyzeCommand
             }
 
             var discoveryService = new SolutionDiscoveryService();
+            progress.Report(15, "Discovering projects, package references, and named types...");
             _logger.Info("Discovering projects, package references, and named types...");
-            var analysisResult = await discoveryService.DiscoverAsync(workspaceLoadResult, options, CancellationToken.None);
+            var analysisResult = await discoveryService.DiscoverAsync(workspaceLoadResult, options, CancellationToken.None, progress.Report);
 
             var writer = new AnalysisResultWriter();
-            await writer.WriteAsync(analysisResult, options.OutputDirectory, CancellationToken.None);
+            progress.Report(80, "Writing reports...");
+            await writer.WriteAsync(analysisResult, options.OutputDirectory, CancellationToken.None, progress.Report);
 
             _logger.Info($"Projects discovered: {analysisResult.Projects.Count}");
             _logger.Info($"Named types discovered: {analysisResult.Types.Count}");
@@ -88,6 +93,7 @@ internal sealed class AnalyzeCommand
             _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "summary.md")}");
             _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "inventory.md")}");
             _logger.Info($"Wrote {Path.Combine(options.OutputDirectory, "violations.md")}");
+            progress.Report(100, "Done");
 
             return ExitCodes.Success;
         }
