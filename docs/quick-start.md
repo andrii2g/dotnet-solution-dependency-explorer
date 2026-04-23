@@ -9,7 +9,7 @@ dotnet build ./src/DependencyExplorer/DependencyExplorer.csproj
 Run it against a solution:
 
 ```bash
-./depex analyze --solution ./DependencyExplorer.slnx --output ./artifacts/review --level all --verbose
+./depex analyze --solution ./samples/Fixtures/LayeredSample/LayeredSample.slnx --output ./artifacts/review --level all --verbose
 ```
 
 Focused example:

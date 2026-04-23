@@ -7,6 +7,7 @@ Analyze a `.sln` or `.slnx` and generate a compact dependency report with projec
 - [Quick Start](./docs/quick-start.md)
 - [Validation](./docs/validation.md)
 - [Example Outputs](./docs/examples)
+- [Sample Report](./docs/sample-report.md): Example combined analysis report with embedded Mermaid diagrams.
 - [Implementation Plan](./PLAN.md)
 
 ## Run
