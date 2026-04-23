@@ -13,6 +13,7 @@ internal sealed class AnalysisResultWriter
     public async Task WriteAsync(AnalysisResult result, string outputDirectory, CancellationToken cancellationToken)
     {
         var analysisJsonPath = Path.Combine(outputDirectory, "analysis.json");
+        var reportPath = Path.Combine(outputDirectory, "report.md");
         var summaryPath = Path.Combine(outputDirectory, "summary.md");
         var inventoryPath = Path.Combine(outputDirectory, "inventory.md");
         var violationsPath = Path.Combine(outputDirectory, "violations.md");
@@ -24,37 +25,123 @@ internal sealed class AnalysisResultWriter
         var focusedDiGraphPath = Path.Combine(outputDirectory, "graph-di-focused.mmd");
 
         var json = JsonSerializer.Serialize(result, JsonOptions);
+        var summary = BuildSummary(result);
+        var inventory = BuildInventory(result);
+        var violations = BuildViolations(result);
+        var projectGraph = ShouldEmitProjectGraph(result) ? BuildProjectMermaid(result) : null;
+        var namespaceGraph = ShouldEmitNamespaceGraph(result) ? BuildNamespaceMermaid(result) : null;
+        var globalClassGraph = BuildGlobalClassMermaid(result);
+        var globalDiGraph = !result.Options.SkipDiGraph ? BuildDiMermaid(result, focused: false) : null;
+        var focusedClassGraph = HasFocus(result) ? BuildFocusedClassMermaid(result) : null;
+        var focusedDiGraph = HasFocus(result) && !result.Options.SkipDiGraph ? BuildDiMermaid(result, focused: true) : null;
+
         await File.WriteAllTextAsync(analysisJsonPath, json, cancellationToken);
-        await File.WriteAllTextAsync(summaryPath, BuildSummary(result), cancellationToken);
-        await File.WriteAllTextAsync(inventoryPath, BuildInventory(result), cancellationToken);
-        await File.WriteAllTextAsync(violationsPath, BuildViolations(result), cancellationToken);
+        await File.WriteAllTextAsync(summaryPath, summary, cancellationToken);
+        await File.WriteAllTextAsync(inventoryPath, inventory, cancellationToken);
+        await File.WriteAllTextAsync(violationsPath, violations, cancellationToken);
+        await File.WriteAllTextAsync(
+            reportPath,
+            BuildCombinedReport(
+                result,
+                summary,
+                inventory,
+                violations,
+                projectGraph,
+                namespaceGraph,
+                globalClassGraph,
+                globalDiGraph,
+                focusedClassGraph,
+                focusedDiGraph),
+            cancellationToken);
         if (string.Equals(result.Options.GraphFormat, "Mermaid", StringComparison.OrdinalIgnoreCase))
         {
-            if (ShouldEmitProjectGraph(result))
+            if (projectGraph is not null)
             {
-                await File.WriteAllTextAsync(projectGraphPath, BuildProjectMermaid(result), cancellationToken);
+                await File.WriteAllTextAsync(projectGraphPath, projectGraph, cancellationToken);
             }
 
-            if (ShouldEmitNamespaceGraph(result))
+            if (namespaceGraph is not null)
             {
-                await File.WriteAllTextAsync(namespaceGraphPath, BuildNamespaceMermaid(result), cancellationToken);
+                await File.WriteAllTextAsync(namespaceGraphPath, namespaceGraph, cancellationToken);
             }
 
-            await File.WriteAllTextAsync(globalClassGraphPath, BuildGlobalClassMermaid(result), cancellationToken);
-            if (!result.Options.SkipDiGraph)
+            await File.WriteAllTextAsync(globalClassGraphPath, globalClassGraph, cancellationToken);
+            if (globalDiGraph is not null)
             {
-                await File.WriteAllTextAsync(globalDiGraphPath, BuildDiMermaid(result, focused: false), cancellationToken);
+                await File.WriteAllTextAsync(globalDiGraphPath, globalDiGraph, cancellationToken);
             }
 
-            if (HasFocus(result))
+            if (focusedClassGraph is not null)
             {
-                await File.WriteAllTextAsync(focusedClassGraphPath, BuildFocusedClassMermaid(result), cancellationToken);
-                if (!result.Options.SkipDiGraph)
+                await File.WriteAllTextAsync(focusedClassGraphPath, focusedClassGraph, cancellationToken);
+                if (focusedDiGraph is not null)
                 {
-                    await File.WriteAllTextAsync(focusedDiGraphPath, BuildDiMermaid(result, focused: true), cancellationToken);
+                    await File.WriteAllTextAsync(focusedDiGraphPath, focusedDiGraph, cancellationToken);
                 }
             }
         }
+    }
+
+    private static string BuildCombinedReport(
+        AnalysisResult result,
+        string summary,
+        string inventory,
+        string violations,
+        string? projectGraph,
+        string? namespaceGraph,
+        string globalClassGraph,
+        string? globalDiGraph,
+        string? focusedClassGraph,
+        string? focusedDiGraph)
+    {
+        var sections = new List<string>
+        {
+            "# Dependency Explorer Report",
+            string.Empty,
+            $"Generated from `{result.Metadata.InputPath}`.",
+            string.Empty,
+            "## Summary",
+            string.Empty,
+            TrimMarkdownHeading(summary),
+            string.Empty,
+            "## Inventory",
+            string.Empty,
+            TrimMarkdownHeading(inventory),
+            string.Empty,
+            "## Findings",
+            string.Empty,
+            TrimMarkdownHeading(violations),
+            string.Empty,
+        };
+
+        if (projectGraph is not null)
+        {
+            AppendMermaidSection(sections, "Project Graph", projectGraph);
+        }
+
+        if (namespaceGraph is not null)
+        {
+            AppendMermaidSection(sections, "Namespace Graph", namespaceGraph);
+        }
+
+        AppendMermaidSection(sections, "Global Class Graph", globalClassGraph);
+
+        if (globalDiGraph is not null)
+        {
+            AppendMermaidSection(sections, "Global DI Graph", globalDiGraph);
+        }
+
+        if (focusedClassGraph is not null)
+        {
+            AppendMermaidSection(sections, "Focused Class Graph", focusedClassGraph);
+        }
+
+        if (focusedDiGraph is not null)
+        {
+            AppendMermaidSection(sections, "Focused DI Graph", focusedDiGraph);
+        }
+
+        return string.Join(Environment.NewLine, sections);
     }
 
     private static string BuildSummary(AnalysisResult result)
@@ -421,6 +508,42 @@ internal sealed class AnalysisResultWriter
     private static string BuildTypeLabel(TypeInfoModel type)
     {
         return string.IsNullOrWhiteSpace(type.Namespace) ? type.Name : $"{type.Namespace}.{type.Name}";
+    }
+
+    private static void AppendMermaidSection(List<string> sections, string title, string graph)
+    {
+        sections.Add($"## {title}");
+        sections.Add(string.Empty);
+        sections.Add("```mermaid");
+        sections.AddRange(graph.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
+        sections.Add("```");
+        sections.Add(string.Empty);
+    }
+
+    private static string TrimMarkdownHeading(string markdown)
+    {
+        var lines = markdown
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Split('\n')
+            .ToList();
+
+        while (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[0]))
+        {
+            lines.RemoveAt(0);
+        }
+
+        if (lines.Count > 0 && lines[0].StartsWith("# ", StringComparison.Ordinal))
+        {
+            lines.RemoveAt(0);
+        }
+
+        while (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[0]))
+        {
+            lines.RemoveAt(0);
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     private static string MakeMermaidNodeId(string value)

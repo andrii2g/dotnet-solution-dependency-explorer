@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added a combined `report.md` with embedded Mermaid sections.
 - Added a Bash fixture validator for WSL/Linux usage.
 - Added a short quick-start guide under `docs/quick-start.md`.
 - Added focused project/namespace/class Mermaid outputs.

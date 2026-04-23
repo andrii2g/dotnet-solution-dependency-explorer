@@ -20,6 +20,7 @@ dotnet ./src/DependencyExplorer/bin/Debug/net8.0/DependencyExplorer.dll analyze 
 
 Main outputs:
 
+- `report.md`: Single combined report with embedded Mermaid graphs.
 - `analysis.json`: Full structured result.
 - `summary.md`: Short overview and main counts.
 - `inventory.md`: Per-project inventory table.
