@@ -33,6 +33,7 @@ dotnet run --project ./src/DependencyExplorer -- analyze --solution ./Dependency
 Main outputs:
 
 - `report.md`: Single combined report with embedded Mermaid graphs.
+- `reports/<project-name>/report.md`: Focused report for each runnable project such as a web app or worker service.
 - `analysis.json`: Full structured result.
 - `summary.md`: Short overview and main counts.
 - `inventory.md`: Per-project inventory table.

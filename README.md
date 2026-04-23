@@ -2,6 +2,8 @@
 
 Analyze a `.sln` or `.slnx` and generate a compact dependency report with project, namespace, class, and constructor-DI graphs.
 
+For solutions with runnable projects such as web apps and worker services, the tool also emits one focused report folder per runnable project under `reports/<project-name>/`.
+
 ## Documentation
 
 - [Quick Start](./docs/quick-start.md)

@@ -37,6 +37,7 @@ internal sealed class SolutionDiscoveryService
             var packageReferences = await ReadPackageReferencesAsync(project.FilePath, cancellationToken);
             var targetFrameworks = await ReadTargetFrameworksAsync(project.FilePath, cancellationToken);
             var projectReferences = await ReadProjectReferencesAsync(project.FilePath, cancellationToken);
+            var (sdk, outputType, isRunnable) = await ReadProjectExecutionMetadataAsync(project.FilePath, cancellationToken);
 
             projects.Add(new ProjectInfoModel
             {
@@ -44,6 +45,9 @@ internal sealed class SolutionDiscoveryService
                 Name = project.Name,
                 FilePath = MakeRelativePath(analysisRoot, project.FilePath),
                 Language = project.Language,
+                Sdk = sdk,
+                OutputType = outputType,
+                IsRunnable = isRunnable,
                 TargetFrameworks = targetFrameworks,
                 ProjectReferences = projectReferences,
                 PackageReferences = packageReferences,
@@ -579,6 +583,35 @@ internal sealed class SolutionDiscoveryService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToArray();
+    }
+
+    private static async Task<(string? Sdk, string? OutputType, bool IsRunnable)> ReadProjectExecutionMetadataAsync(
+        string? projectFilePath,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectFilePath) || !File.Exists(projectFilePath))
+        {
+            return (null, null, false);
+        }
+
+        await using var stream = File.OpenRead(projectFilePath);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+        var projectElement = document.Root;
+        var sdk = projectElement?.Attribute("Sdk")?.Value?.Trim();
+        var outputType = document
+            .Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "OutputType")
+            ?.Value?
+            .Trim();
+
+        var isRunnable =
+            string.Equals(outputType, "Exe", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(outputType, "WinExe", StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(sdk) &&
+             (sdk.Contains(".Web", StringComparison.OrdinalIgnoreCase) ||
+              sdk.Contains("Worker", StringComparison.OrdinalIgnoreCase)));
+
+        return (sdk, outputType, isRunnable);
     }
 }
 

@@ -79,6 +79,49 @@ internal sealed class AnalysisResultWriter
                 await File.WriteAllTextAsync(focusedDiGraphPath, focusedDiGraph, cancellationToken);
             }
         }
+
+        await WriteRunnableProjectReportsAsync(result, outputDirectory, cancellationToken);
+    }
+
+    private static async Task WriteRunnableProjectReportsAsync(AnalysisResult result, string outputDirectory, CancellationToken cancellationToken)
+    {
+        var runnableProjects = result.Projects
+            .Where(project => project.IsRunnable)
+            .OrderBy(project => project.Name, StringComparer.Ordinal)
+            .ToArray();
+
+        if (runnableProjects.Length == 0)
+        {
+            return;
+        }
+
+        var reportsRoot = Path.Combine(outputDirectory, "reports");
+        Directory.CreateDirectory(reportsRoot);
+
+        foreach (var project in runnableProjects)
+        {
+            var projectDirectory = Path.Combine(reportsRoot, SanitizePathSegment(project.Name));
+            Directory.CreateDirectory(projectDirectory);
+
+            var focusedTypeIds = result.Types
+                .Where(type => string.Equals(type.ProjectId, project.Id, StringComparison.Ordinal))
+                .Select(type => type.Id)
+                .ToHashSet(StringComparer.Ordinal);
+
+            var classGraph = BuildTypeMermaid(result, focusedTypeIds);
+            var diGraph = result.Options.SkipDiGraph ? null : BuildDiMermaid(result, focusedTypeIds);
+            var neighborhoodGraph = BuildProjectNeighborhoodMermaid(result, project);
+            var report = BuildRunnableProjectReport(result, project, focusedTypeIds, classGraph, diGraph, neighborhoodGraph);
+
+            await File.WriteAllTextAsync(Path.Combine(projectDirectory, "report.md"), report, cancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(projectDirectory, "graph-classes-focused.mmd"), classGraph, cancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(projectDirectory, "graph-project-neighborhood.mmd"), neighborhoodGraph, cancellationToken);
+
+            if (diGraph is not null)
+            {
+                await File.WriteAllTextAsync(Path.Combine(projectDirectory, "graph-di-focused.mmd"), diGraph, cancellationToken);
+            }
+        }
     }
 
     private static string BuildCombinedReport(
@@ -292,6 +335,88 @@ internal sealed class AnalysisResultWriter
         return string.Join(Environment.NewLine, lines);
     }
 
+    private static string BuildRunnableProjectReport(
+        AnalysisResult result,
+        ProjectInfoModel project,
+        ISet<string> focusedTypeIds,
+        string classGraph,
+        string? diGraph,
+        string neighborhoodGraph)
+    {
+        var internalTypeEdgeCount = result.TypeDependencies
+            .Where(edge => !edge.IsExternal &&
+                           string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                           string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal) &&
+                           focusedTypeIds.Contains(edge.SourceId) &&
+                           focusedTypeIds.Contains(edge.TargetId) &&
+                           !string.Equals(edge.SourceId, edge.TargetId, StringComparison.Ordinal))
+            .Select(edge => (edge.SourceId, edge.TargetId))
+            .Distinct()
+            .Count();
+
+        var diEdgeCount = result.Options.SkipDiGraph
+            ? 0
+            : result.DiDependencies
+                .Where(edge => !edge.IsExternal &&
+                               string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
+                               string.Equals(edge.TargetKind, "Type", StringComparison.Ordinal) &&
+                               focusedTypeIds.Contains(edge.SourceId) &&
+                               focusedTypeIds.Contains(edge.TargetId))
+                .Select(edge => (edge.SourceId, edge.TargetId))
+                .Distinct()
+                .Count();
+
+        var lines = new List<string>
+        {
+            $"# {project.Name} Report",
+            string.Empty,
+            $"Generated from `{result.Metadata.InputPath}`.",
+            string.Empty,
+            "## Project",
+            string.Empty,
+            $"- Name: `{project.Name}`",
+            $"- Path: `{project.FilePath}`",
+            $"- SDK: {project.Sdk ?? "unknown"}",
+            $"- Output type: {project.OutputType ?? "unknown"}",
+            $"- Runnable: {(project.IsRunnable ? "yes" : "no")}",
+            $"- Frameworks: {(project.TargetFrameworks.Count == 0 ? "unknown" : string.Join(", ", project.TargetFrameworks))}",
+            $"- Documents: {project.DocumentCount}",
+            $"- Package references: {(project.PackageReferences.Count == 0 ? "none" : string.Join(", ", project.PackageReferences.Select(package => package.Version is null ? package.Name : $"{package.Name}@{package.Version}")))}",
+            $"- Project references: {(project.ProjectReferences.Count == 0 ? "none" : string.Join(", ", project.ProjectReferences))}",
+            string.Empty,
+            "## Focused Counts",
+            string.Empty,
+            $"- Project types: {focusedTypeIds.Count}",
+            $"- Internal class dependency edges: {internalTypeEdgeCount}",
+            $"- Internal constructor DI edges: {diEdgeCount}",
+            string.Empty,
+            "This report is a runnable-project slice of the global analysis. Use the root `report.md` for the full system view.",
+            string.Empty,
+        };
+
+        var warnings = BuildProjectRenderWarnings(project.Name, internalTypeEdgeCount, diEdgeCount, result.Options.SkipDiGraph);
+        if (warnings.Count > 0)
+        {
+            lines.Add("## Graph Rendering Warnings");
+            lines.Add(string.Empty);
+            foreach (var warning in warnings)
+            {
+                lines.Add($"- {warning}");
+            }
+
+            lines.Add(string.Empty);
+        }
+
+        AppendMermaidSection(lines, "Project Neighborhood Graph", neighborhoodGraph);
+        AppendMermaidSection(lines, "Focused Class Graph", classGraph);
+        if (diGraph is not null)
+        {
+            AppendMermaidSection(lines, "Focused DI Graph", diGraph);
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
     private static string BuildViolations(AnalysisResult result)
     {
         var lines = new List<string>
@@ -477,6 +602,22 @@ internal sealed class AnalysisResultWriter
             .GroupBy(type => type.Id, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var focusTypeIds = GetFocusedTypeIds(result, focused);
+        return BuildDiMermaid(result, focusTypeIds, typeById);
+    }
+
+    private static string BuildDiMermaid(AnalysisResult result, ISet<string>? focusTypeIds)
+    {
+        var typeById = result.Types
+            .GroupBy(type => type.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        return BuildDiMermaid(result, focusTypeIds, typeById);
+    }
+
+    private static string BuildDiMermaid(
+        AnalysisResult result,
+        ISet<string>? focusTypeIds,
+        IReadOnlyDictionary<string, TypeInfoModel> typeById)
+    {
         var visibleEdges = result.DiDependencies
             .Where(edge => !edge.IsExternal &&
                            string.Equals(edge.SourceKind, "Type", StringComparison.Ordinal) &&
@@ -519,6 +660,70 @@ internal sealed class AnalysisResultWriter
     private static string BuildTypeLabel(TypeInfoModel type)
     {
         return string.IsNullOrWhiteSpace(type.Namespace) ? type.Name : $"{type.Namespace}.{type.Name}";
+    }
+
+    private static string BuildProjectNeighborhoodMermaid(AnalysisResult result, ProjectInfoModel project)
+    {
+        var projectById = result.Projects.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        var connectedProjectIds = new HashSet<string>(StringComparer.Ordinal)
+        {
+            project.Id,
+        };
+
+        foreach (var edge in result.ProjectDependencies.Where(edge => !edge.IsExternal))
+        {
+            if (string.Equals(edge.SourceId, project.Id, StringComparison.Ordinal) ||
+                string.Equals(edge.TargetId, project.Id, StringComparison.Ordinal))
+            {
+                connectedProjectIds.Add(edge.SourceId);
+                connectedProjectIds.Add(edge.TargetId);
+            }
+        }
+
+        var edges = result.ProjectDependencies
+            .Where(edge => !edge.IsExternal &&
+                           connectedProjectIds.Contains(edge.SourceId) &&
+                           connectedProjectIds.Contains(edge.TargetId))
+            .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.DependencyKind, StringComparer.Ordinal)
+            .ThenBy(edge => edge.Label, StringComparer.Ordinal)
+            .ToArray();
+
+        var lines = new List<string>
+        {
+            "graph TD",
+        };
+
+        foreach (var projectId in connectedProjectIds
+            .OrderBy(id => ToStableProjectGraphNodeId(id, projectById), StringComparer.Ordinal))
+        {
+            var projectLabel = projectById.TryGetValue(projectId, out var item) ? item.Name : projectId;
+            lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(projectId, projectById))}[{EscapeMermaidLabel(projectLabel)}]");
+        }
+
+        foreach (var edge in edges)
+        {
+            lines.Add($"    {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.SourceId, projectById))} --> {MakeMermaidNodeId(ToStableProjectGraphNodeId(edge.TargetId, projectById))}");
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static IReadOnlyList<string> BuildProjectRenderWarnings(string projectName, int classEdgeCount, int diEdgeCount, bool skipDiGraph)
+    {
+        var warnings = new List<string>();
+        if (classEdgeCount >= MermaidEdgeWarningThreshold)
+        {
+            warnings.Add($"The focused class graph for `{projectName}` was generated with {classEdgeCount} edges and may exceed Mermaid render limits in some UIs.");
+        }
+
+        if (!skipDiGraph && diEdgeCount >= MermaidEdgeWarningThreshold)
+        {
+            warnings.Add($"The focused DI graph for `{projectName}` was generated with {diEdgeCount} edges and may exceed Mermaid render limits in some UIs.");
+        }
+
+        return warnings;
     }
 
     private static void AppendRenderWarnings(List<string> lines, AnalysisResult result, string headingLevel)
@@ -626,6 +831,19 @@ internal sealed class AnalysisResultWriter
     private static string EscapeMermaidLabel(string value)
     {
         return value.Replace("[", "(").Replace("]", ")").Replace("\"", "'");
+    }
+
+    private static string SanitizePathSegment(string value)
+    {
+        var builder = new System.Text.StringBuilder(value.Length);
+        foreach (var character in value)
+        {
+            builder.Append(char.IsLetterOrDigit(character) || character is '-' or '_' or '.'
+                ? character
+                : '-');
+        }
+
+        return builder.ToString().Trim('-');
     }
 
     private static string BuildNamespaceLabel(string namespaceId)

@@ -72,6 +72,12 @@ internal sealed class ProjectInfoModel
 
     public required string Language { get; init; }
 
+    public string? Sdk { get; init; }
+
+    public string? OutputType { get; init; }
+
+    public required bool IsRunnable { get; init; }
+
     public required IReadOnlyList<string> TargetFrameworks { get; init; }
 
     public required IReadOnlyList<string> ProjectReferences { get; init; }
