@@ -13,6 +13,12 @@ For solutions with runnable projects such as web apps and worker services, the t
 - [Sample Report](./docs/sample-report.md): Example combined report for the clean `LayeredSample` solution.
 - [Legacy Sample Report](./docs/legacy-sample-report.md): Example combined report for the more tangled `MixedLegacySample` solution.
 - [Implementation Plan](./PLAN.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
 
 ## Run
 

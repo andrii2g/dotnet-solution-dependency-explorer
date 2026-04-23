@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added MIT license, contributing guide, and code of conduct for open-source readiness.
 - Added a current-behavior specification document for analysis rules, heuristics, findings, and validation.
 - Added conservative incoming/outgoing hub detection based on internal dependency fan-in/fan-out.
 - Added a dedicated cycle fixture with positive namespace and type cycle coverage.
