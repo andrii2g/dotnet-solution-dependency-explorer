@@ -1,4 +1,4 @@
-namespace DependencyExplorer.Models;
+namespace A2G.DependencyExplorer.Models;
 
 internal sealed class AnalysisResult
 {

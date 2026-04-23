@@ -1,10 +1,10 @@
-using DependencyExplorer.Models;
+using A2G.DependencyExplorer.Models;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using System.Xml.Linq;
 
-namespace DependencyExplorer.Workspace;
+namespace A2G.DependencyExplorer.Workspace;
 
 internal sealed class WorkspaceLoader
 {

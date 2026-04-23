@@ -1,9 +1,9 @@
-using DependencyExplorer.Discovery;
-using DependencyExplorer.Export;
-using DependencyExplorer.Utils;
-using DependencyExplorer.Workspace;
+using A2G.DependencyExplorer.Discovery;
+using A2G.DependencyExplorer.Export;
+using A2G.DependencyExplorer.Utils;
+using A2G.DependencyExplorer.Workspace;
 
-namespace DependencyExplorer.Cli;
+namespace A2G.DependencyExplorer.Cli;
 
 internal sealed class AnalyzeCommand
 {

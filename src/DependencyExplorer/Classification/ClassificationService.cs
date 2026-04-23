@@ -1,6 +1,6 @@
-using DependencyExplorer.Models;
+using A2G.DependencyExplorer.Models;
 
-namespace DependencyExplorer.Classification;
+namespace A2G.DependencyExplorer.Classification;
 
 internal sealed class ClassificationService
 {

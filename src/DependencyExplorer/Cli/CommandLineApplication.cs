@@ -1,6 +1,6 @@
-using DependencyExplorer.Utils;
+using A2G.DependencyExplorer.Utils;
 
-namespace DependencyExplorer.Cli;
+namespace A2G.DependencyExplorer.Cli;
 
 internal static class CommandLineApplication
 {

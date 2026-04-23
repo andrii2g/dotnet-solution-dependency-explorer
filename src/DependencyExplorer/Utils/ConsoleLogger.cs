@@ -1,4 +1,4 @@
-namespace DependencyExplorer.Utils;
+namespace A2G.DependencyExplorer.Utils;
 
 internal sealed class ConsoleLogger
 {

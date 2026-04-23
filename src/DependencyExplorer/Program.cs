@@ -1,6 +1,6 @@
-using DependencyExplorer.Cli;
+using A2G.DependencyExplorer.Cli;
 
-namespace DependencyExplorer;
+namespace A2G.DependencyExplorer;
 
 internal static class Program
 {

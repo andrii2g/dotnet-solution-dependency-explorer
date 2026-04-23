@@ -1,4 +1,4 @@
-namespace DependencyExplorer.Cli;
+namespace A2G.DependencyExplorer.Cli;
 
 internal static class AnalyzeCommandParser
 {

@@ -1,7 +1,7 @@
 using System.Text.Json;
-using DependencyExplorer.Models;
+using A2G.DependencyExplorer.Models;
 
-namespace DependencyExplorer.Export;
+namespace A2G.DependencyExplorer.Export;
 
 internal sealed class AnalysisResultWriter
 {

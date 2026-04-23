@@ -1,12 +1,12 @@
-using DependencyExplorer.Classification;
+using A2G.DependencyExplorer.Classification;
 using System.Xml.Linq;
-using DependencyExplorer.Models;
-using DependencyExplorer.Utils;
-using DependencyExplorer.Workspace;
+using A2G.DependencyExplorer.Models;
+using A2G.DependencyExplorer.Utils;
+using A2G.DependencyExplorer.Workspace;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace DependencyExplorer.Discovery;
+namespace A2G.DependencyExplorer.Discovery;
 
 internal sealed class SolutionDiscoveryService
 {
