@@ -193,6 +193,22 @@ internal sealed class ClassificationService
 
     private static ClassificationInfo ClassifyProject(ProjectInfoModel project, IReadOnlyList<TypeInfoModel> projectTypes)
     {
+        var mixedTypes = projectTypes
+            .Where(type => type.Classification?.Layer == "Mixed")
+            .ToArray();
+        if (mixedTypes.Length > 0)
+        {
+            return new ClassificationInfo
+            {
+                Layer = "Mixed",
+                Confidence = "Medium",
+                Reasons = mixedTypes
+                    .Select(type => $"{BuildTypeLabel(type)} classified as Mixed")
+                    .Take(5)
+                    .ToArray(),
+            };
+        }
+
         var scores = CreateScoreMap();
         var reasons = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 

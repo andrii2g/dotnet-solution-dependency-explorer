@@ -16,6 +16,8 @@ internal sealed class AnalysisResultWriter
         var summaryPath = Path.Combine(outputDirectory, "summary.md");
         var inventoryPath = Path.Combine(outputDirectory, "inventory.md");
         var violationsPath = Path.Combine(outputDirectory, "violations.md");
+        var projectGraphPath = Path.Combine(outputDirectory, "graph-projects.mmd");
+        var namespaceGraphPath = Path.Combine(outputDirectory, "graph-namespaces.mmd");
         var globalClassGraphPath = Path.Combine(outputDirectory, "graph-classes-global.mmd");
 
         var json = JsonSerializer.Serialize(result, JsonOptions);
@@ -25,6 +27,8 @@ internal sealed class AnalysisResultWriter
         await File.WriteAllTextAsync(violationsPath, BuildViolations(result), cancellationToken);
         if (string.Equals(result.Options.GraphFormat, "Mermaid", StringComparison.OrdinalIgnoreCase))
         {
+            await File.WriteAllTextAsync(projectGraphPath, BuildProjectMermaid(result), cancellationToken);
+            await File.WriteAllTextAsync(namespaceGraphPath, BuildNamespaceMermaid(result), cancellationToken);
             await File.WriteAllTextAsync(globalClassGraphPath, BuildGlobalClassMermaid(result), cancellationToken);
         }
     }
@@ -225,6 +229,84 @@ internal sealed class AnalysisResultWriter
         return string.Join(Environment.NewLine, lines);
     }
 
+    private static string BuildProjectMermaid(AnalysisResult result)
+    {
+        var projectById = result.Projects.ToDictionary(project => project.Id, StringComparer.Ordinal);
+        var edges = result.ProjectDependencies
+            .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.DependencyKind, StringComparer.Ordinal)
+            .ThenBy(edge => edge.Label, StringComparer.Ordinal)
+            .ToArray();
+
+        var nodeIds = new HashSet<string>(result.Projects.Select(project => project.Id), StringComparer.Ordinal);
+        nodeIds.UnionWith(edges.Select(edge => edge.TargetId));
+
+        var lines = new List<string>
+        {
+            "graph TD",
+        };
+
+        foreach (var nodeId in nodeIds.OrderBy(id => id, StringComparer.Ordinal))
+        {
+            var label = projectById.TryGetValue(nodeId, out var project)
+                ? project.Name
+                : nodeId.StartsWith("package::", StringComparison.Ordinal) ? nodeId["package::".Length..] : nodeId;
+            lines.Add($"    {MakeMermaidNodeId(nodeId)}[{EscapeMermaidLabel(label)}]");
+        }
+
+        foreach (var edge in edges)
+        {
+            lines.Add($"    {MakeMermaidNodeId(edge.SourceId)} --> {MakeMermaidNodeId(edge.TargetId)}");
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string BuildNamespaceMermaid(AnalysisResult result)
+    {
+        var edges = result.NamespaceDependencies
+            .Where(edge => !edge.IsExternal)
+            .Where(edge => !string.Equals(edge.SourceId, edge.TargetId, StringComparison.Ordinal))
+            .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.DependencyKind, StringComparer.Ordinal)
+            .ThenBy(edge => edge.Label, StringComparer.Ordinal)
+            .ToArray();
+        var visibleEdges = edges
+            .Select(edge => (edge.SourceId, edge.TargetId))
+            .Distinct()
+            .OrderBy(edge => edge.SourceId, StringComparer.Ordinal)
+            .ThenBy(edge => edge.TargetId, StringComparer.Ordinal)
+            .ToArray();
+
+        var nodeIds = new HashSet<string>(visibleEdges.Select(edge => edge.SourceId), StringComparer.Ordinal);
+        nodeIds.UnionWith(visibleEdges.Select(edge => edge.TargetId));
+        if (nodeIds.Count == 0)
+        {
+            nodeIds.UnionWith(result.Types
+                .Where(type => !string.IsNullOrWhiteSpace(type.Namespace))
+                .Select(type => $"{type.ProjectId}::{type.Namespace}"));
+        }
+
+        var lines = new List<string>
+        {
+            "graph TD",
+        };
+
+        foreach (var nodeId in nodeIds.OrderBy(id => id, StringComparer.Ordinal))
+        {
+            lines.Add($"    {MakeMermaidNodeId(nodeId)}[{EscapeMermaidLabel(BuildNamespaceLabel(nodeId))}]");
+        }
+
+        foreach (var edge in visibleEdges)
+        {
+            lines.Add($"    {MakeMermaidNodeId(edge.SourceId)} --> {MakeMermaidNodeId(edge.TargetId)}");
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
     private static string BuildTypeLabel(TypeInfoModel type)
     {
         return string.IsNullOrWhiteSpace(type.Namespace) ? type.Name : $"{type.Namespace}.{type.Name}";
@@ -244,5 +326,11 @@ internal sealed class AnalysisResultWriter
     private static string EscapeMermaidLabel(string value)
     {
         return value.Replace("[", "(").Replace("]", ")").Replace("\"", "'");
+    }
+
+    private static string BuildNamespaceLabel(string namespaceId)
+    {
+        var separatorIndex = namespaceId.IndexOf("::", StringComparison.Ordinal);
+        return separatorIndex >= 0 ? namespaceId[(separatorIndex + 2)..] : namespaceId;
     }
 }

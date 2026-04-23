@@ -77,7 +77,7 @@ internal sealed class SolutionDiscoveryService
                     }
 
                     var typeModel = CreateTypeModel(symbol, projectId, analysisRoot, document.FilePath);
-                    if (discoveredTypeKeys.Add($"{typeModel.ProjectId}|{typeModel.Id}|{typeModel.FilePath}"))
+                    if (discoveredTypeKeys.Add($"{typeModel.ProjectId}|{typeModel.Id}"))
                     {
                         types.Add(typeModel);
                         declaredTypes.Add(new DeclaredTypeContext(symbol, project, document, typeModel));

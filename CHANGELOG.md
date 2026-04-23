@@ -2,6 +2,7 @@
 
 ## 2026-04-23
 
+- Added fixture validation snapshots, script, and CI workflow.
 - Switched the CLI parser and help system to `System.CommandLine`.
 - Added heuristic classification + inventory + violations.
 

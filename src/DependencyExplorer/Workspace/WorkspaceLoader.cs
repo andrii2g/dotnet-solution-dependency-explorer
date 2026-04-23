@@ -49,9 +49,21 @@ internal sealed class WorkspaceLoader
             throw new InvalidOperationException($"No projects were found in the .slnx file: {solutionPath}");
         }
 
+        var loadedProjectPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var projectPath in projectPaths)
         {
+            if (loadedProjectPaths.Contains(projectPath))
+            {
+                continue;
+            }
+
             await workspace.OpenProjectAsync(projectPath, cancellationToken: cancellationToken);
+            foreach (var loadedProjectPath in workspace.CurrentSolution.Projects
+                .Select(project => project.FilePath)
+                .Where(path => !string.IsNullOrWhiteSpace(path)))
+            {
+                loadedProjectPaths.Add(Path.GetFullPath(loadedProjectPath!));
+            }
         }
 
         return workspace.CurrentSolution;
