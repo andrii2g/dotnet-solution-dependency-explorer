@@ -206,4 +206,25 @@ internal sealed class FindingModel
     public required string SubjectId { get; init; }
 
     public required string Message { get; init; }
+
+    public IReadOnlyList<RemediationSuggestionModel> Suggestions { get; set; } = Array.Empty<RemediationSuggestionModel>();
+}
+
+internal sealed class RemediationSuggestionModel
+{
+    public required string FindingCategory { get; init; }
+
+    public required string Title { get; init; }
+
+    public required string Why { get; init; }
+
+    public required IReadOnlyList<string> SuggestedActions { get; init; }
+
+    public required string FirstStep { get; init; }
+
+    public required IReadOnlyList<string> Tradeoffs { get; init; }
+
+    public string? AvoidWhen { get; init; }
+
+    public required string Confidence { get; init; }
 }
