@@ -19,6 +19,7 @@ The tool analyzes a `.sln` or `.slnx` and produces:
 - constructor-DI dependency information
 - heuristic classification
 - architectural findings
+- deterministic remediation suggestions for selected finding categories
 - Markdown and Mermaid outputs
 
 The tool is intended for architecture review, refactoring analysis, and large-solution exploration.
@@ -310,6 +311,8 @@ Current findings may include:
 - broad package usage findings
 - scale findings
 
+For selected finding categories, findings also carry deterministic remediation suggestions.
+
 ### 10.1 Cycle detection
 
 Cycle detection is currently implemented using strongly connected components over:
@@ -356,6 +359,32 @@ Current reporting rule:
 
 - hub findings are emitted only when thresholds are active and nodes exceed them
 - summary hub section is omitted when no hub thresholds are active
+
+### 10.3 Remediation suggestions
+
+Remediation suggestions are currently generated locally and deterministically.
+
+They do not use:
+
+- AI
+- external services
+- network calls
+
+Current remediation coverage:
+
+- `project-cycle`
+- `namespace-cycle`
+- `type-cycle`
+- `outgoing-hub`
+- `incoming-hub`
+- `mixed-project`
+- `infrastructure-leakage`
+
+Current rendering locations:
+
+- `analysis.json`
+- `violations.md`
+- `report.md`
 
 ## 11. Metrics
 

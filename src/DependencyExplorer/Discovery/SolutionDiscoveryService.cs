@@ -1,6 +1,7 @@
 using A2G.DependencyExplorer.Classification;
 using System.Xml.Linq;
 using A2G.DependencyExplorer.Models;
+using A2G.DependencyExplorer.Remediation;
 using A2G.DependencyExplorer.Utils;
 using A2G.DependencyExplorer.Workspace;
 using Microsoft.CodeAnalysis;
@@ -164,6 +165,8 @@ internal sealed class SolutionDiscoveryService
             metrics,
             workspaceLoadResult.Diagnostics,
             includeClassificationFindings: !options.SkipClassification);
+        var remediationService = new RemediationService();
+        remediationService.Apply(findings);
 
         return new AnalysisResult
         {
