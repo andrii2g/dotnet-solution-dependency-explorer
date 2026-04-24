@@ -2,6 +2,7 @@
 
 ## 2026-04-24
 
+- Implemented deterministic remediation suggestions for supported finding categories.
 - Added a separate remediation-guidance specification for rule-based issue suggestions.
 
 ## 2026-04-23

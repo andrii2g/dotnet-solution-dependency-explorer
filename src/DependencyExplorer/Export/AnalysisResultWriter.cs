@@ -484,6 +484,7 @@ internal sealed class AnalysisResultWriter
         foreach (var finding in result.Findings)
         {
             lines.Add($"- [{finding.Severity}] {finding.Category}: {finding.Message}");
+            AppendRemediation(lines, finding);
         }
 
         return string.Join(Environment.NewLine, lines);
@@ -831,6 +832,48 @@ internal sealed class AnalysisResultWriter
         sections.AddRange(graph.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
         sections.Add("```");
         sections.Add(string.Empty);
+    }
+
+    private static void AppendRemediation(List<string> lines, FindingModel finding)
+    {
+        if (finding.Suggestions.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var suggestion in finding.Suggestions)
+        {
+            lines.Add(string.Empty);
+            lines.Add("  Suggested resolution:");
+            lines.Add($"  - {suggestion.Title}");
+            lines.Add($"  - Why: {suggestion.Why}");
+
+            foreach (var action in suggestion.SuggestedActions)
+            {
+                lines.Add($"  - {action}");
+            }
+
+            lines.Add(string.Empty);
+            lines.Add("  First step:");
+            lines.Add($"  - {suggestion.FirstStep}");
+
+            if (suggestion.Tradeoffs.Count > 0)
+            {
+                lines.Add(string.Empty);
+                lines.Add("  Tradeoffs:");
+                foreach (var tradeoff in suggestion.Tradeoffs)
+                {
+                    lines.Add($"  - {tradeoff}");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(suggestion.AvoidWhen))
+            {
+                lines.Add(string.Empty);
+                lines.Add("  Avoid when:");
+                lines.Add($"  - {suggestion.AvoidWhen}");
+            }
+        }
     }
 
     private static string TrimMarkdownHeading(string markdown)
