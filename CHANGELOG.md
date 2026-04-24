@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-24
+
+- Added a separate remediation-guidance specification for rule-based issue suggestions.
+
 ## 2026-04-23
 
 - Added MIT license, contributing guide, and code of conduct for open-source readiness.
